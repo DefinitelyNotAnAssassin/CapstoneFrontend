@@ -41,12 +41,40 @@ import {
   IonAlert,
   IonFab,
   IonFabButton,
+  IonSpinner,
+  IonRefresher,
+  IonRefresherContent,
+  IonSegment,
+  IonSegmentButton,
+  IonSkeletonText,
+  IonThumbnail,
 } from "@ionic/react"
-import { add, close, save, refresh, addCircle, removeCircle, create, trash, download, print } from "ionicons/icons"
-import { employees, type LeaveType, leavePolicies, positions } from "../data/data"
+import { 
+  add, 
+  close, 
+  save, 
+  refresh, 
+  addCircle, 
+  removeCircle, 
+  create, 
+  trash, 
+  download, 
+  print, 
+  person, 
+  calendar, 
+  time, 
+  settings,
+  chevronDown
+} from "ionicons/icons"
+import { leaveCreditService, Employee, LeaveCredit as APILeaveCredit, LeavePolicy } from "../services/leaveCreditService"
+import { API_ENDPOINTS, getAuthHeaders } from "../config/api"
+import { LeaveCredit } from "../services/LeaveService"
 
-// Define leave credit types
-interface LeaveCredit {
+// Leave types from API
+export type LeaveType = 'Vacation Leave' | 'Sick Leave' | 'Birthday Leave' | 'Solo Parent Leave' | 'Bereavement Leave' | 'Paternity Leave' | 'Maternity Leave'
+
+// Define leave credit types (for local state management)
+interface LocalLeaveCredit {
   id: string
   employeeId: string
   leaveType: LeaveType
@@ -141,7 +169,7 @@ const initialLeaveCreditPolicies: LeaveCreditPolicy[] = [
 ]
 
 // Sample leave credits
-const initialLeaveCredits: LeaveCredit[] = [
+const initialLeaveCredits: LocalLeaveCredit[] = [
   {
     id: "1",
     employeeId: "4", // Jennifer Davis
@@ -220,11 +248,20 @@ const initialLeaveCredits: LeaveCredit[] = [
 const years = [2022, 2023, 2024, 2025]
 
 const LeaveCreditManagement: React.FC = () => {
-  const [selectedEmployee, setSelectedEmployee] = useState<string>("")
+  // API Data State
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [apiLeaveCredits, setApiLeaveCredits] = useState<APILeaveCredit[]>([])
+  const [leavePolicies, setLeavePolicies] = useState<LeavePolicy[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  // UI State
+  const [selectedEmployee, setSelectedEmployee] = useState<string>("all")
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
   const [searchText, setSearchText] = useState<string>("")
   const [showModal, setShowModal] = useState<boolean>(false)
-  const [currentCredit, setCurrentCredit] = useState<LeaveCredit | null>(null)
+  const [currentCredit, setCurrentCredit] = useState<LocalLeaveCredit | null>(null)
   const [currentPolicy, setCurrentPolicy] = useState<LeaveCreditPolicy | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [showAlert, setShowAlert] = useState(false)
@@ -232,16 +269,79 @@ const LeaveCreditManagement: React.FC = () => {
   const [showDeleteAlert, setShowDeleteAlert] = useState(false)
   const [showConfirmAlert, setShowConfirmAlert] = useState(false)
   const [confirmAction, setConfirmAction] = useState<string>("")
-  const [transactionHistory, setTransactionHistory] = useState<LeaveCredit[]>([])
+  const [transactionHistory, setTransactionHistory] = useState<LocalLeaveCredit[]>([])
   const [selectedLeaveType, setSelectedLeaveType] = useState<string>("all")
-  const [leaveCredits, setLeaveCredits] = useState<LeaveCredit[]>([])
+  const [leaveCredits, setLeaveCredits] = useState<LocalLeaveCredit[]>([])
   const [leaveCreditPolicies, setLeaveCreditPolicies] = useState<LeaveCreditPolicy[]>([])
-  const [filteredCredits, setFilteredCredits] = useState<LeaveCredit[]>([])
+  const [filteredCredits, setFilteredCredits] = useState<LocalLeaveCredit[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState("")
 
-  // Load leave credits from localStorage or use initial data
+  // Load initial data on component mount
   useEffect(() => {
+    loadInitialData()
+  }, [])
+
+  // Load all required data from API
+  const loadInitialData = async () => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      // Load all data in parallel
+      const [employeesData, leavePoliciesData, leaveCreditsData] = await Promise.all([
+        leaveCreditService.fetchEmployees(),
+        leaveCreditService.fetchLeavePolicies(),
+        leaveCreditService.fetchLeaveCredits()
+      ])
+
+      setEmployees(employeesData)
+      setLeavePolicies(leavePoliciesData)
+      setApiLeaveCredits(leaveCreditsData)
+
+      // Convert API leave credits to local format for compatibility
+      const localCredits = convertApiCreditsToLocal(leaveCreditsData, employeesData)
+      setLeaveCredits(localCredits)
+
+      // Load saved policies from localStorage or use defaults
+      const savedPolicies = localStorage.getItem("hrims-leave-credit-policies")
+      if (savedPolicies) {
+        setLeaveCreditPolicies(JSON.parse(savedPolicies))
+      } else {
+        setLeaveCreditPolicies(initialLeaveCreditPolicies)
+      }
+
+    } catch (error) {
+      console.error('Error loading data:', error)
+      setError(error instanceof Error ? error.message : 'Failed to load data')
+      
+      // Fallback to localStorage/initial data if API fails
+      loadFallbackData()
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Convert API leave credits to local format
+  const convertApiCreditsToLocal = (apiCredits: APILeaveCredit[], employees: Employee[]): LocalLeaveCredit[] => {
+    return apiCredits.map(credit => ({
+      id: credit.id,
+      employeeId: credit.employee,
+      leaveType: credit.leave_type as LeaveType,
+      year: credit.year,
+      creditsAdded: Number(credit.total_credits),
+      creditsUsed: Number(credit.used_credits),
+      balance: Number(credit.remaining_credits),
+      dateAdded: credit.created_at.split('T')[0],
+      addedBy: "1", // Default admin ID
+      transactionType: "Initial"
+    }))
+  }
+
+  // Load fallback data if API fails
+  const loadFallbackData = () => {
     const savedCredits = localStorage.getItem("hrims-leave-credits")
     if (savedCredits) {
       setLeaveCredits(JSON.parse(savedCredits))
@@ -255,7 +355,85 @@ const LeaveCreditManagement: React.FC = () => {
     } else {
       setLeaveCreditPolicies(initialLeaveCreditPolicies)
     }
-  }, [])
+  }
+
+  // Refresh data from API
+  const refreshData = async () => {
+    setRefreshing(true)
+    try {
+      await loadInitialData()
+      setToastMessage("Data refreshed successfully!")
+      setShowToast(true)
+    } catch (error) {
+      setToastMessage("Failed to refresh data")
+      setShowToast(true)
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  // Handle pull-to-refresh
+  const handleRefresh = async (event: CustomEvent) => {
+    await refreshData()
+    event.detail.complete()
+  }
+
+  // Save leave credit to API and local storage
+  const saveLeaveCredit = async (credit: LocalLeaveCredit, isNew: boolean = false) => {
+    try {
+      if (isNew) {
+        const apiData = {
+          employee: credit.employeeId,
+          leave_type: credit.leaveType,
+          year: credit.year,
+          total_credits: credit.creditsAdded,
+          used_credits: credit.creditsUsed
+        }
+        await leaveCreditService.createLeaveCredit(apiData)
+      } else {
+        const apiData = {
+          total_credits: credit.creditsAdded,
+          used_credits: credit.creditsUsed
+        }
+        await leaveCreditService.updateLeaveCredit(credit.id, apiData)
+      }
+      
+      // Refresh data after successful save
+      await loadInitialData()
+      setToastMessage(isNew ? "Leave credit created successfully!" : "Leave credit updated successfully!")
+      setShowToast(true)
+    } catch (error) {
+      console.error('Error saving leave credit:', error)
+      setToastMessage("Failed to save leave credit")
+      setShowToast(true)
+    }
+  }
+
+  // Delete leave credit from API and local storage
+  const deleteLeaveCredit = async (creditId: string) => {
+    try {
+      await leaveCreditService.deleteLeaveCredit(creditId)
+      await loadInitialData()
+      setToastMessage("Leave credit deleted successfully!")
+      setShowToast(true)
+    } catch (error) {
+      console.error('Error deleting leave credit:', error)
+      setToastMessage("Failed to delete leave credit")
+      setShowToast(true)
+    }
+  }
+
+  // Load leave credits from localStorage or use initial data
+  useEffect(() => {
+    if (!loading) {
+      const savedCredits = localStorage.getItem("hrims-leave-credits")
+      if (savedCredits && leaveCredits.length === 0) {
+        setLeaveCredits(JSON.parse(savedCredits))
+      } else if (leaveCredits.length === 0) {
+        setLeaveCredits(initialLeaveCredits)
+      }
+    }
+  }, [loading])
 
   // Save leave credits to localStorage when they change
   useEffect(() => {
@@ -294,9 +472,9 @@ const LeaveCreditManagement: React.FC = () => {
       filtered = filtered.filter((credit) => {
         const employee = employees.find((emp) => emp.id === credit.employeeId)
         return (
-          employee?.firstName.toLowerCase().includes(searchLower) ||
-          employee?.lastName.toLowerCase().includes(searchLower) ||
-          credit.leaveType.toLowerCase().includes(searchLower)
+          (employee?.firstName && employee.firstName.toLowerCase().includes(searchLower)) ||
+          (employee?.lastName && employee.lastName.toLowerCase().includes(searchLower)) ||
+          (credit.leaveType && credit.leaveType.toLowerCase().includes(searchLower))
         )
       })
     }
@@ -330,21 +508,21 @@ const LeaveCreditManagement: React.FC = () => {
   // Filter employees based on search text
   const filteredEmployees = employees.filter(
     (employee) =>
-      employee.firstName.toLowerCase().includes(searchText.toLowerCase()) ||
-      employee.lastName.toLowerCase().includes(searchText.toLowerCase()) ||
-      employee.employeeId.toLowerCase().includes(searchText.toLowerCase()),
+      (employee.first_name && employee.first_name.toLowerCase().includes(searchText.toLowerCase())) ||
+      (employee.last_name && employee.last_name.toLowerCase().includes(searchText.toLowerCase())) ||
+      (employee.employee_id && employee.employee_id.toLowerCase().includes(searchText.toLowerCase())),
   )
 
   // Get employee name
   const getEmployeeName = (employeeId: string) => {
     const employee = employees.find((emp) => emp.id === employeeId)
-    return employee ? `${employee.firstName} ${employee.lastName}` : "Unknown Employee"
+    return employee ? `${employee.first_name} ${employee.last_name}` : "Unknown Employee"
   }
 
   // Get employee avatar
   const getEmployeeAvatar = (employeeId: string) => {
     const employee = employees.find((emp) => emp.id === employeeId)
-    return employee?.profileImage || "https://ionicframework.com/docs/img/demos/avatar.svg"
+    return employee?.profile_image || "https://ionicframework.com/docs/img/demos/avatar.svg"
   }
 
   // Format date for display
@@ -473,7 +651,7 @@ const LeaveCreditManagement: React.FC = () => {
   }
 
   // Handle saving a leave credit
-  const handleSaveCredit = () => {
+  const handleSaveCredit = async () => {
     if (!currentCredit) return
 
     // Validate credit
@@ -500,9 +678,26 @@ const LeaveCreditManagement: React.FC = () => {
       balance: newBalance,
     }
 
-    // Add the new credit to the list
+    if (isEditing) {
+      // PATCH the leave credit in the backend
+      try {
+        await leaveCreditService.updateLeaveCredit(currentCredit.id, {
+          total_credits: currentCredit.creditsAdded,
+          used_credits: currentCredit.creditsUsed,
+        })
+        await loadInitialData()
+        setAlertMessage("Leave credit updated successfully")
+      } catch (error) {
+        setAlertMessage("Failed to update leave credit")
+      }
+      setShowAlert(true)
+      setIsModalOpen(false)
+      return
+    }
+
+    // Add the new credit to the list (for new credits)
     setLeaveCredits([...leaveCredits, updatedCredit])
-    setAlertMessage(isEditing ? "Leave credit updated successfully" : "Leave credit added successfully")
+    setAlertMessage("Leave credit added successfully")
     setShowAlert(true)
     setIsModalOpen(false)
   }
@@ -749,6 +944,69 @@ const LeaveCreditManagement: React.FC = () => {
     })
   }
 
+  // Add a function to fetch leave credits for a specific employee using the by_employee endpoint
+  const fetchLeaveCreditsByEmployee = async (employeeId: string, year?: number) => {
+    try {
+      const token = localStorage.getItem('authToken')
+      // Use getAuthHeaders from config/api, not from leaveCreditService
+      const headers = token ? getAuthHeaders(token) : { 'Content-Type': 'application/json' }
+      let url = `${API_ENDPOINTS.leaveCredits}by_employee/?employee_id=${employeeId}`
+      if (year) url += `&year=${year}`
+      const response = await fetch(url, { method: 'GET', headers })
+      if (!response.ok) throw new Error('Failed to fetch leave credits')
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error fetching leave credits by employee:', error)
+      return []
+    }
+  }
+
+  // In the useEffect that loads initial data, fetch leave credits for each employee using by_employee endpoint
+  useEffect(() => {
+    const loadAllEmployeeCredits = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const employeesData = await leaveCreditService.fetchEmployees()
+        setEmployees(employeesData)
+        // Fetch leave credits for each employee using by_employee endpoint
+        const creditsPromises = employeesData.map(emp =>
+          fetchLeaveCreditsByEmployee(emp.id, selectedYear)
+        )
+        const creditsResults = await Promise.all(creditsPromises)
+        // Flatten and convert to local format
+        const allCredits: LocalLeaveCredit[] = creditsResults.flat().map((credit: any) => ({
+          id: credit.id.toString(),
+          employeeId: credit.employee?.toString?.() ?? "", // ensure string
+          leaveType: credit.leave_type as LeaveType,
+          year: Number(credit.year),
+          creditsAdded: Number(credit.total_credits),
+          creditsUsed: Number(credit.used_credits),
+          balance: Number(credit.remaining_credits),
+          dateAdded: credit.created_at?.split?.('T')[0] ?? "",
+          addedBy: "1",
+          transactionType: "Initial"
+        }))
+        setLeaveCredits(allCredits)
+        // Load saved policies from localStorage or use defaults
+        const savedPolicies = localStorage.getItem("hrims-leave-credit-policies")
+        if (savedPolicies) {
+          setLeaveCreditPolicies(JSON.parse(savedPolicies))
+        } else {
+          setLeaveCreditPolicies(initialLeaveCreditPolicies)
+        }
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Failed to load data')
+        loadFallbackData()
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadAllEmployeeCredits()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear])
+
   return (
     <IonPage>
       <IonHeader>
@@ -761,7 +1019,6 @@ const LeaveCreditManagement: React.FC = () => {
       </IonHeader>
 
       <IonContent>
-        {/* Leave Credits List */}
         <IonCard>
           <IonCardHeader>
             <IonCardTitle>Leave Credits</IonCardTitle>
@@ -792,71 +1049,134 @@ const LeaveCreditManagement: React.FC = () => {
               </IonRow>
             </IonGrid>
 
-            <IonList>
-              {filteredEmployees.map((employee) => (
-                <IonCard key={employee.id} className="ion-margin">
-                  <IonCardHeader>
-                    <IonCardTitle>
-                      {employee.lastName}, {employee.firstName}{" "}
-                      {employee.middleName ? employee.middleName.charAt(0) + "." : ""}
-                    </IonCardTitle>
-                    <IonChip color="primary">{employee.employeeId}</IonChip>
-                  </IonCardHeader>
-                  <IonCardContent>
-                    <IonList>
-                      {leaveCredits
-                        .filter((credit) => credit.employeeId === employee.id)
-                        .sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
-                        .map((credit) => (
-                          <IonItem key={credit.id}>
-                            <IonLabel>
-                              <h2>{credit.leaveType}</h2>
-                              <IonGrid>
-                                <IonRow>
-                                  <IonCol size="6">
-                                    <p>Total: {credit.creditsAdded} days</p>
-                                  </IonCol>
-                                  <IonCol size="6">
-                                    <p>Used: {credit.creditsUsed} days</p>
-                                  </IonCol>
-                                </IonRow>
-                                <IonRow>
-                                  <IonCol size="6">
-                                    <p>Pending: {credit.creditsAdded - credit.creditsUsed} days</p>
-                                  </IonCol>
-                                  <IonCol size="6">
-                                    <p>Remaining: {credit.balance} days</p>
-                                  </IonCol>
-                                </IonRow>
-                                <IonRow>
-                                  <IonCol>
-                                    <IonProgressBar
-                                      value={credit.creditsUsed / credit.creditsAdded}
-                                      color={credit.balance < 5 ? "danger" : "primary"}
-                                    ></IonProgressBar>
-                                    <IonNote className="ion-text-end ion-padding-top">
-                                      {Math.round((credit.creditsUsed / credit.creditsAdded) * 100)}% used
-                                    </IonNote>
-                                  </IonCol>
-                                </IonRow>
-                              </IonGrid>
-                            </IonLabel>
-                            <IonButton
-                              slot="end"
-                              fill="clear"
-                              onClick={() => handleEditCredit(credit)}
-                            >
-                              <IonIcon icon={refresh} slot="icon-only" />
-                            </IonButton>
-                          </IonItem>
-                        ))}
-                    </IonList>
-                  </IonCardContent>
-                </IonCard>
-              ))}
-            </IonList>
+            {loading ? (
+              <IonGrid>
+                <IonRow>
+                  <IonCol size="12" className="ion-text-center">
+                    <IonSpinner name="crescent" />
+                    <IonText>Loading employees...</IonText>
+                  </IonCol>
+                </IonRow>
+              </IonGrid>
+            ) : filteredEmployees.length === 0 ? (
+              <IonGrid>
+                <IonRow>
+                  <IonCol size="12" className="ion-text-center">
+                    <IonText>No employees found.</IonText>
+                  </IonCol>
+                </IonRow>
+              </IonGrid>
+            ) : (
+              <IonGrid style={{ height: "100%" }}>
+                <IonRow style={{ alignItems: "stretch", height: "100%" }}>
+                  {filteredEmployees.map((employee) => (
+                    <IonCol
+                      key={employee.id}
+                      size="12"
+                      size-md="6"
+                      size-lg="4"
+                      size-xl="4"
+                      style={{ display: "flex", flexDirection: "column", height: "100%" }}
+                    >
+                      <IonCard
+                        className="ion-margin"
+                        style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+                      >
+                        <IonCardHeader>
+                          <IonGrid>
+                            <IonRow className="ion-align-items-center">
+                              <IonCol size="auto">
+                                <IonAvatar>
+                                  <IonImg src={getEmployeeAvatar(employee.id)} alt="avatar" />
+                                </IonAvatar>
+                              </IonCol>
+                              <IonCol>
+                                <IonCardTitle>
+                                  {employee.last_name}, {employee.first_name}
+                                </IonCardTitle>
+                                <IonText color="medium" style={{ fontSize: "0.9em" }}>
+                                  {employee.position?.name || employee.position_title || "Position"}<br />
+                                  {employee.department?.name || employee.department_name || ""}
+                                </IonText>
+                              </IonCol>
+                            </IonRow>
+                          </IonGrid>
+                          <IonChip color="primary">{employee.employee_id}</IonChip>
+                        </IonCardHeader>
+                        <IonCardContent>
+                          <IonList lines="none" style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                            {leaveCredits
+                              .filter((credit) => credit.employeeId === employee.id)
+                              .sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
+                              .map((credit) => (
+                                <div
+                                  key={credit.id}
+                                  style={{
+                                    minWidth: 180,
+                                    flex: "1 1 180px",
+                                    background: "#f8f9fa",
+                                    borderRadius: 8,
+                                    padding: 8,
+                                    marginBottom: 8,
+                                    boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
+                                  }}
+                                >
+                                  <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
+                                    <IonBadge color="secondary" style={{ marginRight: 8 }}>{credit.leaveType}</IonBadge>
+                                    <IonButton
+                                      fill="clear"
+                                      size="small"
+                                      style={{ marginLeft: "auto" }}
+                                      onClick={() => handleEditCredit(credit)}
+                                    >
+                                      <IonIcon icon={refresh} slot="icon-only" />
+                                    </IonButton>
+                                  </div>
+                                  <div style={{ fontSize: "0.95em", marginBottom: 2 }}>
+                                    <span>Total: <b>{credit.creditsAdded}</b> | </span>
+                                    <span>Used: <b>{credit.creditsUsed}</b></span>
+                                  </div>
+                                  <div style={{ fontSize: "0.95em", marginBottom: 2 }}>
+                                    <span>Pending: <b>{credit.creditsAdded - credit.creditsUsed}</b> | </span>
+                                    <span style={{ color: credit.balance < 5 ? "#eb445a" : "#2dd36f" }}>
+                                      Rem: <b>{credit.balance}</b>
+                                    </span>
+                                  </div>
+                                  <IonProgressBar
+                                    value={credit.creditsAdded > 0 ? credit.creditsUsed / credit.creditsAdded : 0}
+                                    color={credit.balance < 5 ? "danger" : "primary"}
+                                    style={{ height: 6, borderRadius: 4, marginTop: 2 }}
+                                  />
+                                  <IonNote className="ion-text-end" style={{ fontSize: "0.8em", display: "block" }}>
+                                    {credit.creditsAdded > 0
+                                      ? Math.round((credit.creditsUsed / credit.creditsAdded) * 100)
+                                      : 0}
+                                    % used
+                                  </IonNote>
+                                </div>
+                              ))}
+                          {leaveCredits.filter((credit) => credit.employeeId === employee.id).length === 0 && (
+                            <IonItem lines="none">
+                              <IonLabel color="medium">No leave credits found.</IonLabel>
+                            </IonItem>
+                          )}
+                        </IonList>
+                      </IonCardContent>
+                    </IonCard>
+                  </IonCol>
+                ))}
+              </IonRow>
+            </IonGrid>
+            )}
           </IonCardContent>
         </IonCard>
+
+        {/* Floating Action Button for Add Credit */}
+        <IonFab vertical="bottom" horizontal="end" slot="fixed">
+          <IonFabButton color="primary" onClick={handleAddCredit}>
+            <IonIcon icon={add} />
+          </IonFabButton>
+        </IonFab>
 
         {/* Leave Credit Edit/Add Modal */}
         <IonModal isOpen={isModalOpen} onDidDismiss={() => setIsModalOpen(false)}>
@@ -887,7 +1207,7 @@ const LeaveCreditManagement: React.FC = () => {
                     >
                       {employees.map((emp) => (
                         <IonSelectOption key={emp.id} value={emp.id}>
-                          {emp.firstName} {emp.lastName}
+                          {emp.first_name} {emp.last_name}
                         </IonSelectOption>
                       ))}
                     </IonSelect>
@@ -903,7 +1223,7 @@ const LeaveCreditManagement: React.FC = () => {
                       placeholder="Select Leave Type"
                       disabled={isEditing}
                     >
-                      {leavePolicies.map((policy) => (
+                      {leaveCreditPolicies.map((policy) => (
                         <IonSelectOption key={policy.id} value={policy.leaveType}>
                           {policy.leaveType}
                         </IonSelectOption>
@@ -1057,7 +1377,7 @@ const LeaveCreditManagement: React.FC = () => {
                     onIonChange={(e) => setCurrentPolicy({ ...currentPolicy, leaveType: e.detail.value })}
                     placeholder="Select Leave Type"
                   >
-                    {leavePolicies.map((policy) => (
+                    {leaveCreditPolicies.map((policy) => (
                       <IonSelectOption key={policy.id} value={policy.leaveType}>
                         {policy.leaveType}
                       </IonSelectOption>
