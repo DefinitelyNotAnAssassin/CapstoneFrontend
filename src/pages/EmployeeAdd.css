@@ -1,0 +1,37 @@
+.form-container {
+  --ion-item-background: transparent;
+}
+
+ion-label[position="stacked"] {
+  margin-bottom: 12px !important;
+  font-weight: 500 !important;
+  padding-left: 4px !important;
+  color: var(--ion-color-dark) !important;
+}
+
+ion-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  margin-bottom: 8px;
+}
+
+ion-input, ion-textarea, ion-select, ion-datetime {
+  --padding-start: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+ion-card {
+  border-radius: 8px;
+  margin: 10px;
+}
+
+ion-card-header {
+  padding-bottom: 5px;
+}
+
+ion-card-title {
+  font-size: 18px;
+  font-weight: 600;
+}
