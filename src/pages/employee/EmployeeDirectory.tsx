@@ -31,10 +31,10 @@ import {
   IonToast,
 } from "@ionic/react"
 import { add, search, filter, refresh, checkmarkCircleOutline, shieldOutline } from "ionicons/icons"
-import employeeService from "../services/EmployeeServiceNew"
-import { useRole } from "../contexts/RoleContext"
-import type { EmployeeInformation } from "../data/data"
-import RoleDebugger from "../components/RoleDebugger"
+import employeeService from "../../services/EmployeeServiceNew"
+import { useRole } from "../../contexts/RoleContext"
+import type { EmployeeInformation } from "../../data/data"
+import RoleDebugger from "../../components/RoleDebugger"
 
 const EmployeeDirectory: React.FC = () => {
   const { userRole, employee: currentEmployee, hasPermission } = useRole()

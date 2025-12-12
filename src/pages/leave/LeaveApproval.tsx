@@ -45,10 +45,10 @@ import {
   timeOutline,
   calendarOutline,
 } from 'ionicons/icons';
-import { useRole } from '../contexts/RoleContext';
-import leaveService, { LeaveRequest as LeaveRequestType } from '../services/LeaveService';
-import EmployeeDetail from './EmployeeDetail';
-import employeeService from '../services/EmployeeServiceNew';
+import { useRole } from '../../contexts/RoleContext';
+import leaveService, { LeaveRequest as LeaveRequestType } from '../../services/LeaveService';
+import EmployeeDetail from '../employee/EmployeeDetail'
+import employeeService from '../../services/EmployeeServiceNew';
 
 const LeaveApproval: React.FC = () => {
   const { userRole, employee, loading: roleLoading, hasPermission } = useRole();
@@ -172,7 +172,7 @@ const LeaveApproval: React.FC = () => {
   };
 
   // Set your API base URL here
-  const API_BASE_URL = (window as any).API_BASE_URL || 'http://127.0.0.1:8000/api';
+  const API_BASE_URL = (window as any).API_BASE_URL || 'http://dharklike.pythonanywhere.com/api';
   // Fetch employee details and leave credit balance for the selected request
   useEffect(() => {
     const fetchEmployeeAndCredit = async () => {

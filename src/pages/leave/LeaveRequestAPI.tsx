@@ -47,15 +47,17 @@ import {
   closeCircleOutline,
   eyeOutline,
 } from 'ionicons/icons';
-import { useRole } from '../contexts/RoleContext';
-import leaveService, { LeaveRequest as LeaveRequestType, LeaveCredit } from '../services/LeaveService';
+import { useRole } from '../../contexts/RoleContext';
+import leaveService, { LeaveRequest as LeaveRequestType, LeaveCredit, LeavePolicy } from '../../services/LeaveService';
 
 const LeaveRequest: React.FC = () => {
   const { employee, loading: roleLoading } = useRole();
-    // State management
+  
+  // State management
   const [activeSegment, setActiveSegment] = useState<string>('my-requests');
   const [myRequests, setMyRequests] = useState<LeaveRequestType[]>([]);
   const [leaveCredits, setLeaveCredits] = useState<LeaveCredit[]>([]);
+  const [leavePolicies, setLeavePolicies] = useState<LeavePolicy[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -77,35 +79,23 @@ const LeaveRequest: React.FC = () => {
     if (!roleLoading) {
       loadData();
     }
-  }, [roleLoading]);  const loadData = async () => {
+  }, [roleLoading]);
+
+  const loadData = async () => {
     setLoading(true);
     try {
-      // Load data individually with fallback handling
-      let requestsData: LeaveRequestType[] = [];
-      let creditsData: LeaveCredit[] = [];
-
-      try {
-        requestsData = await leaveService.getMyLeaveRequests();
-      } catch (error) {
-        console.error('Error loading requests:', error);
-        requestsData = [];
-      }
-
-      try {
-        creditsData = await leaveService.getMyLeaveCredits();
-      } catch (error) {
-        console.error('Error loading credits:', error);
-        creditsData = [];
-      }
+      const [requestsData, creditsData, policiesData] = await Promise.all([
+        leaveService.getMyLeaveRequests(),
+        leaveService.getMyLeaveCredits(),
+        leaveService.getLeavePolicies()
+      ]);
       
-      setMyRequests(requestsData || []);
-      setLeaveCredits(creditsData || []);
+      setMyRequests(requestsData);
+      setLeaveCredits(creditsData);
+      setLeavePolicies(policiesData);
     } catch (error) {
       console.error('Error loading leave data:', error);
       showToastMessage('Error loading leave data', 'danger');
-      // Ensure all states are set to empty arrays as fallback
-      setMyRequests([]);
-      setLeaveCredits([]);
     } finally {
       setLoading(false);
     }
@@ -127,7 +117,9 @@ const LeaveRequest: React.FC = () => {
       return leaveService.calculateBusinessDays(newRequest.start_date, newRequest.end_date);
     }
     return 0;
-  };  const handleCreateRequest = async () => {
+  };
+
+  const handleCreateRequest = async () => {
     try {
       const days = calculateDays();
       if (days <= 0) {
@@ -135,19 +127,7 @@ const LeaveRequest: React.FC = () => {
         return;
       }
 
-      // Check if employee has enough leave credits
-      const selectedCredit = getAvailableLeaveTypes().find(credit => credit.leave_type === newRequest.leave_type);
-      if (!selectedCredit) {
-        showToastMessage('Selected leave type is not available', 'danger');
-        return;
-      }
-
-      if (days > selectedCredit.remaining_credits) {
-        showToastMessage(`Insufficient leave credits. You have ${selectedCredit.remaining_credits} days remaining for ${newRequest.leave_type}`, 'danger');
-        return;
-      }
-
-      const result = await leaveService.createMyLeaveRequest({
+      await leaveService.createLeaveRequest({
         ...newRequest,
         days_requested: days
       });
@@ -179,32 +159,12 @@ const LeaveRequest: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => leaveService.getStatusColor(status);  const getLeaveTypeColor = (leaveType: string) => leaveService.getLeaveTypeColor(leaveType);
-  
+  const getStatusColor = (status: string) => leaveService.getStatusColor(status);
+  const getLeaveTypeColor = (leaveType: string) => leaveService.getLeaveTypeColor(leaveType);
+
   const getCurrentYearCredits = () => {
     const currentYear = new Date().getFullYear();
-    return (leaveCredits || []).filter(credit => credit.year === currentYear);
-  };
-
-  const getAvailableLeaveTypes = () => {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1; // 1-12
-    const employeeBirthMonth = employee?.date_of_birth ? new Date(employee.date_of_birth).getMonth() + 1 : null;
-    
-    return (leaveCredits || [])
-      .filter(credit => {
-        // Only show credits with remaining balance and for current year
-        if (credit.year !== currentYear || credit.remaining_credits <= 0) {
-          return false;
-        }
-        
-        // Special handling for Birthday Leave
-        if (credit.leave_type === 'Birthday Leave') {
-          return employeeBirthMonth === currentMonth;
-        }
-        
-        return true;
-      });
+    return leaveCredits.filter(credit => credit.year === currentYear);
   };
 
   if (loading || roleLoading) {
@@ -291,8 +251,9 @@ const LeaveRequest: React.FC = () => {
                   </IonText>
                 </IonCardContent>
               </IonCard>
-            ) : (              <IonList>
-                {(myRequests || []).map((request) => (
+            ) : (
+              <IonList>
+                {myRequests.map((request) => (
                   <IonCard key={request.id}>
                     <IonCardContent>
                       <IonGrid>
@@ -386,34 +347,27 @@ const LeaveRequest: React.FC = () => {
             {/* Leave Policies Card */}
             <IonCard>
               <IonCardHeader>
-                <IonCardTitle>Available Leave Credits</IonCardTitle>
+                <IonCardTitle>Available Leave Types</IonCardTitle>
               </IonCardHeader>
               <IonCardContent>
-                {getCurrentYearCredits().length === 0 ? (
-                  <IonText color="medium">
-                    <p>No leave credits available for this year</p>
-                  </IonText>
-                ) : (
-                  <IonList>
-                    {getCurrentYearCredits().map((credit) => (
-                      <IonItem key={credit.id} lines="full">
-                        <IonLabel>
-                          <h3>{credit.leave_type}</h3>
-                          <p>Used: {credit.used_credits} | Remaining: {credit.remaining_credits}</p>
-                          <div style={{ marginTop: '8px' }}>
-                            <IonProgressBar 
-                              value={credit.used_credits / credit.total_credits}
-                              color={credit.remaining_credits > 5 ? 'success' : credit.remaining_credits > 2 ? 'warning' : 'danger'}
-                            />
-                          </div>
-                        </IonLabel>
-                        <IonChip color={getLeaveTypeColor(credit.leave_type)}>
-                          {credit.remaining_credits}/{credit.total_credits}
-                        </IonChip>
-                      </IonItem>
-                    ))}
-                  </IonList>
-                )}
+                <IonList>
+                  {leavePolicies.map((policy) => (
+                    <IonItem key={policy.id} lines="full">
+                      <IonLabel>
+                        <h3>{policy.leave_type}</h3>
+                        <p>{policy.description}</p>
+                        <p>
+                          <IonText color="primary">
+                            <strong>{policy.days_allowed} days allowed per year</strong>
+                          </IonText>
+                        </p>
+                      </IonLabel>
+                      <IonChip color={getLeaveTypeColor(policy.leave_type)}>
+                        {policy.days_allowed} days
+                      </IonChip>
+                    </IonItem>
+                  ))}
+                </IonList>
               </IonCardContent>
             </IonCard>
           </div>
@@ -437,15 +391,16 @@ const LeaveRequest: React.FC = () => {
             </IonToolbar>
           </IonHeader>
           <IonContent className="ion-padding">
-            <IonList>              <IonItem>
+            <IonList>
+              <IonItem>
                 <IonLabel position="stacked">Leave Type</IonLabel>                <IonSelect
                   value={newRequest.leave_type}
                   onIonChange={(e) => setNewRequest({...newRequest, leave_type: e.detail.value})}
                   placeholder="Select leave type"
                 >
-                  {getAvailableLeaveTypes().map((credit) => (
-                    <IonSelectOption key={credit.id} value={credit.leave_type}>
-                      {credit.leave_type} ({credit.remaining_credits} days remaining)
+                  {leavePolicies.map((policy) => (
+                    <IonSelectOption key={policy.id} value={policy.leave_type}>
+                      {policy.leave_type} ({policy.days_allowed} days)
                     </IonSelectOption>
                   ))}
                 </IonSelect>
@@ -556,12 +511,7 @@ const LeaveRequest: React.FC = () => {
                       <IonItem>
                         <IonLabel>
                           <h3>Approved By</h3>
-                          <p>
-                            {selectedRequest.approved_by.first_name} {selectedRequest.approved_by.last_name}
-                            {selectedRequest.approved_by.position && (
-                              <span> &mdash; {selectedRequest.approved_by.position}</span>
-                            )}
-                          </p>
+                          <p>{selectedRequest.approved_by.full_name}</p>
                         </IonLabel>
                       </IonItem>
                     )}

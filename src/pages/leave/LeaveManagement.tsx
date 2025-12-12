@@ -57,7 +57,7 @@ import {
   print,
   create,
 } from "ionicons/icons"
-import { type LeaveRequest, leavePolicies, employees } from "../data/data"
+import { type LeaveRequest, leavePolicies, employees } from "../../data/data"
 
 // Sample leave requests data
 const initialLeaveRequests: LeaveRequest[] = [

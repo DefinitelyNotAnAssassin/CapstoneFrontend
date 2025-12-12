@@ -312,13 +312,16 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
+    console.log('RoleContext: Initial mount, refreshing role...')
     refreshRole();
   }, []);
 
   // Listen for authentication changes
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'authUser' || e.key === 'employeeData') {
+      console.log('RoleContext: Storage changed:', e.key)
+      if (e.key === 'authUser' || e.key === 'employeeData' || e.key === 'authToken') {
+        console.log('RoleContext: Auth-related storage changed, refreshing role...')
         refreshRole();
       }
     };

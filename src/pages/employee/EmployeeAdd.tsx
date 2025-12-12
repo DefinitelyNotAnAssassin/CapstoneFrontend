@@ -36,11 +36,11 @@ import {
 } from "@ionic/react"
 import { useHistory } from "react-router"
 import { save } from "ionicons/icons"
-import { positions, departments, offices, programs, type EmployeeInformation } from "../data/data"
-import employeeService  from "../services/EmployeeService"
-import { useAudit } from "../hooks/useAudit"
-import { FormItem } from "../components/FormComponents"
-import { applyFormStyles, getFormItemStyle, getLabelStyle } from "../utils/formHelpers"
+import { positions, departments, offices, programs, type EmployeeInformation } from "../../data/data"
+import employeeService  from "../../services/EmployeeService"
+import { useAudit } from "../../hooks/useAudit"
+import { FormItem } from "../../components/FormComponents"
+import { applyFormStyles, getFormItemStyle, getLabelStyle } from "../../utils/formHelpers"
 import "./EmployeeAdd.css"
 
 const EmployeeAdd: React.FC = () => {

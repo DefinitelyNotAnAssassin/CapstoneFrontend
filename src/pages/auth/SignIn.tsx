@@ -20,10 +20,10 @@ import {
 } from "@ionic/react"
 import { lockClosedOutline, mailOutline, logInOutline } from "ionicons/icons"
 import { useHistory } from "react-router-dom"
-import { useAudit } from "../hooks/useAudit"
-import AuthService from "../services/AuthService"
-import employeeService from "../services/EmployeeService"
-import { applyFormStyles } from "../utils/formHelpers"
+import { useAudit } from "../../hooks/useAudit"
+import AuthService from "../../services/AuthService"
+import employeeService from "../../services/EmployeeService"
+import { applyFormStyles } from "../../utils/formHelpers"
 import "./SignIn.css"
 
 const SignIn: React.FC = () => {
@@ -108,6 +108,10 @@ const SignIn: React.FC = () => {
         )
         
         console.log("Login successful, navigating to dashboard...")
+        
+        // Small delay to ensure auth data is persisted
+        await new Promise(resolve => setTimeout(resolve, 300))
+        
         navigateToDashboard()
         return true
       } else {

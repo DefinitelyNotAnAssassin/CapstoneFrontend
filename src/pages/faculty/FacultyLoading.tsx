@@ -40,7 +40,7 @@ import {
   IonText,
 } from "@ionic/react"
 import { add, close, create, trash, save, time } from "ionicons/icons"
-import { employees, departments, programs, positions } from "../data/data"
+import { employees, departments, programs, positions } from "../../data/data"
 
 // Define schedule types
 interface ScheduleEntry {

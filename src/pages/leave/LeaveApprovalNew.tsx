@@ -48,8 +48,8 @@ import {
   informationCircleOutline
 } from "ionicons/icons"
 import { useHistory } from "react-router"
-import { useRole } from "../contexts/RoleContext"
-import leaveService, { type LeaveRequest as LeaveRequestType } from "../services/LeaveService"
+import { useRole } from "../../contexts/RoleContext"
+import leaveService, { type LeaveRequest as LeaveRequestType } from "../../services/LeaveService"
 
 const LeaveApproval: React.FC = () => {
   const history = useHistory()

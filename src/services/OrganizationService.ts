@@ -1,7 +1,7 @@
 import { type Organization, type Department, type Program, type Office, type Position } from "../data/data";
 
 // API configuration
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL = 'http://dharklike.pythonanywhere.com/api';
 
 // Helper function to handle API responses
 const handleResponse = async (response: Response) => {

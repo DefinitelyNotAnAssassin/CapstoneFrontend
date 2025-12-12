@@ -44,7 +44,7 @@ import {
   type Department,
   type Program,
   type Office,
-} from "../data/data"
+} from "../../data/data"
 
 const OrganizationManagement: React.FC = () => {
   const [segment, setSegment] = useState<"departments" | "programs" | "offices">("departments")

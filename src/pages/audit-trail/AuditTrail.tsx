@@ -42,8 +42,8 @@ import {
   documentTextOutline,
   informationCircleOutline,
 } from "ionicons/icons"
-import { useAudit } from "../hooks/useAudit"
-import type { AuditLog, AuditModule, AuditAction } from "../data/audit-data"
+import { useAudit } from "../../hooks/useAudit"
+import type { AuditLog, AuditModule, AuditAction } from "../../data/audit-data"
 import "./AuditTrail.css"
 
 const AuditTrail: React.FC = () => {

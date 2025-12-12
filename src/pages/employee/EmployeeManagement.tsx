@@ -51,9 +51,9 @@ import {
   schoolOutline,
   personOutline
 } from "ionicons/icons"
-import employeeService from "../services/EmployeeServiceNew"
-import { useRole } from "../contexts/RoleContext"
-import type { EmployeeInformation } from "../data/data"
+import employeeService from "../../services/EmployeeServiceNew"
+import { useRole } from "../../contexts/RoleContext"
+import type { EmployeeInformation } from "../../data/data"
 
 const EmployeeManagement: React.FC = () => {
   const { userRole, employee: currentEmployee, hasPermission } = useRole()

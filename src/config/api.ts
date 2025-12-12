@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = 'http://localhost:8000/api'
+export const API_BASE_URL = 'http://dharklike.pythonanywhere.com/api';
 
 // API Endpoints
 export const API_ENDPOINTS = {

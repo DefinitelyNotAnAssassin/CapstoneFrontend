@@ -66,9 +66,9 @@ import {
   settings,
   chevronDown
 } from "ionicons/icons"
-import { leaveCreditService, Employee, LeaveCredit as APILeaveCredit, LeavePolicy } from "../services/leaveCreditService"
-import { API_ENDPOINTS, getAuthHeaders } from "../config/api"
-import { LeaveCredit } from "../services/LeaveService"
+import { leaveCreditService, Employee, LeaveCredit as APILeaveCredit, LeavePolicy } from "../../services/leaveCreditService"
+import { API_ENDPOINTS, getAuthHeaders } from "../../config/api"
+import { LeaveCredit } from "../../services/LeaveService"
 
 // Leave types from API
 export type LeaveType = 'Vacation Leave' | 'Sick Leave' | 'Birthday Leave' | 'Solo Parent Leave' | 'Bereavement Leave' | 'Paternity Leave' | 'Maternity Leave'
@@ -278,6 +278,11 @@ const LeaveCreditManagement: React.FC = () => {
   const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState("")
+  
+  // Employee search state for modal
+  const [employeeSearchText, setEmployeeSearchText] = useState<string>("")
+  const [showEmployeeDropdown, setShowEmployeeDropdown] = useState<boolean>(false)
+  const [selectedEmployeeForCredit, setSelectedEmployeeForCredit] = useState<Employee | null>(null)
 
   // Load initial data on component mount
   useEffect(() => {
@@ -544,7 +549,7 @@ const LeaveCreditManagement: React.FC = () => {
 
   // Handle adding a new leave credit
   const handleAddCredit = () => {
-    const newCredit: LeaveCredit = {
+    const newCredit: LocalLeaveCredit = {
       id: Date.now().toString(),
       employeeId: "",
       leaveType: "Vacation Leave",
@@ -558,31 +563,14 @@ const LeaveCreditManagement: React.FC = () => {
     }
     setCurrentCredit(newCredit)
     setIsEditing(false)
+    setEmployeeSearchText("")
+    setSelectedEmployeeForCredit(null)
+    setShowEmployeeDropdown(false)
     setIsModalOpen(true)
   }
 
   // Handle editing a leave credit
-  const handleEditCredit = (credit: LeaveCredit) => {
-    // If no credit is found, create a new one for adjustment
-    if (!credit) {
-      const newCredit: LeaveCredit = {
-        id: Date.now().toString(),
-        employeeId: selectedEmployee,
-        leaveType: "Vacation Leave",
-        year: selectedYear,
-        creditsAdded: 0,
-        creditsUsed: 0,
-        balance: 0,
-        dateAdded: new Date().toISOString().split("T")[0],
-        addedBy: "1", // HR Admin
-        transactionType: "Adjustment",
-      }
-      setCurrentCredit(newCredit)
-      setIsEditing(true)
-      setIsModalOpen(true)
-      return
-    }
-
+  const handleEditCredit = (credit: LocalLeaveCredit) => {
     // Get transaction history for this employee and leave type
     const history = leaveCredits
       .filter((c) => c.employeeId === credit.employeeId && c.leaveType === credit.leaveType && c.year === credit.year)
@@ -591,7 +579,7 @@ const LeaveCreditManagement: React.FC = () => {
     setTransactionHistory(history)
 
     // Create a new adjustment credit based on the current balance
-    const adjustmentCredit: LeaveCredit = {
+    const adjustmentCredit: LocalLeaveCredit = {
       id: Date.now().toString(),
       employeeId: credit.employeeId,
       leaveType: credit.leaveType,
@@ -603,6 +591,14 @@ const LeaveCreditManagement: React.FC = () => {
       addedBy: "1", // HR Admin
       transactionType: "Adjustment",
     }
+
+    // Set employee search text and selected employee for display
+    const employee = employees.find(e => e.id === credit.employeeId)
+    if (employee) {
+      setSelectedEmployeeForCredit(employee)
+      setEmployeeSearchText(`${employee.last_name}, ${employee.first_name}`)
+    }
+    setShowEmployeeDropdown(false)
 
     setCurrentCredit(adjustmentCredit)
     setIsEditing(true)
@@ -667,39 +663,75 @@ const LeaveCreditManagement: React.FC = () => {
       return
     }
 
-    // Calculate new balance
-    const newBalance = isEditing
-      ? currentCredit.balance + currentCredit.creditsAdded - currentCredit.creditsUsed
-      : currentCredit.creditsAdded - currentCredit.creditsUsed
-
-    // Update the credit with the new balance
-    const updatedCredit = {
-      ...currentCredit,
-      balance: newBalance,
-    }
-
     if (isEditing) {
-      // PATCH the leave credit in the backend
+      // When editing, we need to find the actual existing credit record and update it
       try {
-        await leaveCreditService.updateLeaveCredit(currentCredit.id, {
-          total_credits: currentCredit.creditsAdded,
-          used_credits: currentCredit.creditsUsed,
-        })
-        await loadInitialData()
-        setAlertMessage("Leave credit updated successfully")
+        // Find the existing leave credit from the API
+        const existingCredit = apiLeaveCredits.find(
+          (c) => c.employee === currentCredit.employeeId && 
+                 c.leave_type === currentCredit.leaveType && 
+                 c.year === currentCredit.year
+        )
+
+        if (existingCredit) {
+          // Calculate the new totals based on the adjustment
+          const newTotalCredits = Number(existingCredit.total_credits) + currentCredit.creditsAdded
+          const newUsedCredits = Number(existingCredit.used_credits) + currentCredit.creditsUsed
+
+          // Update the existing credit
+          await leaveCreditService.updateLeaveCredit(existingCredit.id, {
+            total_credits: newTotalCredits,
+            used_credits: newUsedCredits,
+          })
+          
+          await loadInitialData()
+          setAlertMessage("Leave credit adjusted successfully")
+        } else {
+          // If no existing credit found, create a new one
+          const apiData = {
+            employee: currentCredit.employeeId,
+            leave_type: currentCredit.leaveType,
+            year: currentCredit.year,
+            total_credits: currentCredit.creditsAdded,
+            used_credits: currentCredit.creditsUsed || 0
+          }
+          
+          await leaveCreditService.createLeaveCredit(apiData)
+          await loadInitialData()
+          setAlertMessage("Leave credit created successfully")
+        }
       } catch (error) {
-        setAlertMessage("Failed to update leave credit")
+        console.error("Error updating leave credit:", error)
+        setAlertMessage(`Failed to update leave credit: ${error instanceof Error ? error.message : 'Unknown error'}`)
       }
       setShowAlert(true)
       setIsModalOpen(false)
       return
     }
 
-    // Add the new credit to the list (for new credits)
-    setLeaveCredits([...leaveCredits, updatedCredit])
-    setAlertMessage("Leave credit added successfully")
-    setShowAlert(true)
-    setIsModalOpen(false)
+    // Create new leave credit in the backend
+    try {
+      const apiData = {
+        employee: currentCredit.employeeId,
+        leave_type: currentCredit.leaveType,
+        year: currentCredit.year,
+        total_credits: currentCredit.creditsAdded,
+        used_credits: currentCredit.creditsUsed || 0
+      }
+      
+      await leaveCreditService.createLeaveCredit(apiData)
+      
+      // Reload data from backend to get the latest state
+      await loadInitialData()
+      
+      setAlertMessage("Leave credit added successfully")
+      setShowAlert(true)
+      setIsModalOpen(false)
+    } catch (error) {
+      console.error("Error creating leave credit:", error)
+      setAlertMessage(`Failed to add leave credit: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setShowAlert(true)
+    }
   }
 
   // Handle saving a leave credit policy
@@ -1095,8 +1127,8 @@ const LeaveCreditManagement: React.FC = () => {
                                   {employee.last_name}, {employee.first_name}
                                 </IonCardTitle>
                                 <IonText color="medium" style={{ fontSize: "0.9em" }}>
-                                  {employee.position?.name || employee.position_title || "Position"}<br />
-                                  {employee.department?.name || employee.department_name || ""}
+                                  {employee.position?.name || "Position"}<br />
+                                  {employee.department?.name || ""}
                                 </IonText>
                               </IonCol>
                             </IonRow>
@@ -1199,19 +1231,127 @@ const LeaveCreditManagement: React.FC = () => {
                     <IonLabel position="stacked">
                       Employee <IonText color="danger">*</IonText>
                     </IonLabel>
-                    <IonSelect
-                      value={currentCredit.employeeId}
-                      onIonChange={(e) => setCurrentCredit({ ...currentCredit, employeeId: e.detail.value })}
-                      placeholder="Select Employee"
-                      disabled={isEditing}
-                    >
-                      {employees.map((emp) => (
-                        <IonSelectOption key={emp.id} value={emp.id}>
-                          {emp.first_name} {emp.last_name}
-                        </IonSelectOption>
-                      ))}
-                    </IonSelect>
                   </IonItem>
+                  
+                  {!isEditing ? (
+                    <div style={{ position: 'relative', marginBottom: '16px' }}>
+                      <IonSearchbar
+                        value={employeeSearchText}
+                        onIonChange={(e) => {
+                          setEmployeeSearchText(e.detail.value!)
+                          setShowEmployeeDropdown(true)
+                        }}
+                        onIonFocus={() => setShowEmployeeDropdown(true)}
+                        placeholder="Search employees by name or ID"
+                        animated
+                        disabled={isEditing}
+                      />
+                      
+                      {selectedEmployeeForCredit && !showEmployeeDropdown && (
+                        <IonCard style={{ marginTop: '8px', marginBottom: '8px' }}>
+                          <IonCardContent style={{ padding: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <IonAvatar style={{ width: '40px', height: '40px' }}>
+                                  <IonImg src={getEmployeeAvatar(selectedEmployeeForCredit.id)} alt="avatar" />
+                                </IonAvatar>
+                                <div>
+                                  <IonText style={{ fontWeight: 'bold', display: 'block' }}>
+                                    {selectedEmployeeForCredit.last_name}, {selectedEmployeeForCredit.first_name}
+                                  </IonText>
+                                  <IonText color="medium" style={{ fontSize: '0.9em' }}>
+                                    {selectedEmployeeForCredit.employee_id} | {selectedEmployeeForCredit.position?.name || 'Position'}
+                                  </IonText>
+                                </div>
+                              </div>
+                              <IonButton
+                                fill="clear"
+                                size="small"
+                                onClick={() => {
+                                  setSelectedEmployeeForCredit(null)
+                                  setCurrentCredit({ ...currentCredit, employeeId: "" })
+                                  setEmployeeSearchText("")
+                                  setShowEmployeeDropdown(true)
+                                }}
+                              >
+                                <IonIcon icon={close} />
+                              </IonButton>
+                            </div>
+                          </IonCardContent>
+                        </IonCard>
+                      )}
+                      
+                      {showEmployeeDropdown && employeeSearchText && (
+                        <IonCard style={{ 
+                          position: 'absolute', 
+                          top: '100%', 
+                          left: 0, 
+                          right: 0, 
+                          zIndex: 1000,
+                          maxHeight: '300px',
+                          overflow: 'auto',
+                          marginTop: '4px'
+                        }}>
+                          <IonList>
+                            {employees
+                              .filter((emp) => {
+                                const searchLower = employeeSearchText.toLowerCase()
+                                return (
+                                  emp.first_name?.toLowerCase().includes(searchLower) ||
+                                  emp.last_name?.toLowerCase().includes(searchLower) ||
+                                  emp.employee_id?.toLowerCase().includes(searchLower) ||
+                                  `${emp.first_name} ${emp.last_name}`.toLowerCase().includes(searchLower)
+                                )
+                              })
+                              .slice(0, 10)
+                              .map((emp) => (
+                                <IonItem
+                                  key={emp.id}
+                                  button
+                                  onClick={() => {
+                                    setSelectedEmployeeForCredit(emp)
+                                    setCurrentCredit({ ...currentCredit, employeeId: emp.id })
+                                    setEmployeeSearchText(`${emp.last_name}, ${emp.first_name}`)
+                                    setShowEmployeeDropdown(false)
+                                  }}
+                                >
+                                  <IonAvatar slot="start" style={{ width: '40px', height: '40px' }}>
+                                    <IonImg src={getEmployeeAvatar(emp.id)} alt="avatar" />
+                                  </IonAvatar>
+                                  <IonLabel>
+                                    <h3>{emp.last_name}, {emp.first_name}</h3>
+                                    <p>{emp.employee_id} | {emp.position?.name || 'Position'}</p>
+                                    <p style={{ fontSize: '0.85em', color: '#666' }}>
+                                      {emp.department?.name || ''}
+                                    </p>
+                                  </IonLabel>
+                                </IonItem>
+                              ))}
+                            {employees.filter((emp) => {
+                              const searchLower = employeeSearchText.toLowerCase()
+                              return (
+                                emp.first_name?.toLowerCase().includes(searchLower) ||
+                                emp.last_name?.toLowerCase().includes(searchLower) ||
+                                emp.employee_id?.toLowerCase().includes(searchLower) ||
+                                `${emp.first_name} ${emp.last_name}`.toLowerCase().includes(searchLower)
+                              )
+                            }).length === 0 && (
+                              <IonItem>
+                                <IonLabel color="medium">No employees found</IonLabel>
+                              </IonItem>
+                            )}
+                          </IonList>
+                        </IonCard>
+                      )}
+                    </div>
+                  ) : (
+                    <IonItem>
+                      <IonLabel>
+                        <h3>{getEmployeeName(currentCredit.employeeId)}</h3>
+                        <p>Employee ID: {employees.find(e => e.id === currentCredit.employeeId)?.employee_id}</p>
+                      </IonLabel>
+                    </IonItem>
+                  )}
 
                   <IonItem>
                     <IonLabel position="stacked">

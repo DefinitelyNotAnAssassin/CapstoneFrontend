@@ -32,7 +32,7 @@ import {
   IonText,
 } from "@ionic/react"
 import { add, create, trash, save, close } from "ionicons/icons"
-import leaveService, { type LeavePolicy } from "../services/LeaveService"
+import leaveService, { type LeavePolicy } from "../../services/LeaveService"
 
 const LeavePolicyManagement: React.FC = () => {
   const [policies, setPolicies] = useState<LeavePolicy[]>([])

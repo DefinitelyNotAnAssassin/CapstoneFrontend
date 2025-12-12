@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   IonContent,
   IonHeader,
@@ -50,17 +50,17 @@ import {
   refreshOutline,
 } from "ionicons/icons"
 import { useHistory } from "react-router"
-import { useAudit } from "../hooks/useAudit"
-import { useRole } from "../contexts/RoleContext"
-import AuthService from "../services/AuthService"
-import leaveService from "../services/LeaveService"
-import EmployeeService from "../services/EmployeeService"
-import RoleDebugger from "../components/RoleDebugger"
+import { useAudit } from "../../hooks/useAudit"
+import { useRole } from "../../contexts/RoleContext"
+import AuthService from "../../services/AuthService"
+import leaveService from "../../services/LeaveService"
+import EmployeeService from "../../services/EmployeeService"
+import RoleDebugger from "../../components/RoleDebugger"
 
 const HRDashboard: React.FC = () => {
   const history = useHistory()
   const { logEvent } = useAudit()
-  const { userRole, employee, loading, hasPermission } = useRole()
+  const { userRole, employee, loading, hasPermission, refreshRole } = useRole()
   const [pendingRequests, setPendingRequests] = useState(0)
   const [myRequests, setMyRequests] = useState(0)
   const [approvedRequests, setApprovedRequests] = useState(0)
@@ -74,6 +74,10 @@ const HRDashboard: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [currentEmployee, setCurrentEmployee] = useState<any>(null)
   const [fetchingEmployeeData, setFetchingEmployeeData] = useState(false)
+  
+  // Use refs to prevent infinite loops
+  const hasLoadedData = useRef(false)
+  const isLoadingData = useRef(false)
 
   // Helper function to get current authenticated user
   const getCurrentAuthUser = () => {
@@ -97,8 +101,12 @@ const HRDashboard: React.FC = () => {
       console.log('Fetching employee data for auth user ID:', authUserId)
       
       const employeeData = await EmployeeService.getEmployeeByAuthId(authUserId)
-      if (employeeData) {        console.log('Fetched employee from backend:', employeeData)
+      if (employeeData) {        
+        console.log('Fetched employee from backend:', employeeData)
         setCurrentEmployee(employeeData)
+        
+        // Store in localStorage for role context to pick up
+        localStorage.setItem('employeeData', JSON.stringify(employeeData))
         
         return employeeData
       } else {
@@ -136,23 +144,61 @@ const HRDashboard: React.FC = () => {
 
     initializeAuthUser()
   }, [])
-    useEffect(() => {    console.log('useEffect triggered:', { 
+  useEffect(() => {    
+    console.log('useEffect triggered:', { 
       currentUser: !!currentUser, 
       currentEmployee: !!currentEmployee, 
       userRole: !!userRole,
+      employee: !!employee,
+      loading,
+      hasLoadedData: hasLoadedData.current,
+      isLoadingData: isLoadingData.current,
       isAuthenticated: currentUser?.isAuthenticated
     })
     
-    // Load dashboard data if we have user and employee data
-    // Don't wait for role as it might be determined internally
-    if (currentUser?.isAuthenticated && currentEmployee) {
-      console.log('Loading dashboard data...')
-      loadDashboardData()
+    // Prevent infinite loops - don't load if already loaded or currently loading
+    if (hasLoadedData.current || isLoadingData.current) {
+      console.log('Skipping load - already loaded or loading')
+      return
     }
-  }, [currentUser, currentEmployee, userRole])
+    
+    // Wait for all necessary data before loading dashboard
+    // We need: authenticated user, employee data (from either state or context), and role context to finish loading
+    const hasUserData = currentUser?.isAuthenticated
+    const hasEmployeeData = currentEmployee || employee
+    const isRoleContextReady = !loading
+    
+    if (hasUserData && hasEmployeeData && isRoleContextReady) {
+      console.log('All data ready, loading dashboard...')
+      // Use the employee data from context if currentEmployee is not set
+      if (!currentEmployee && employee) {
+        setCurrentEmployee(employee)
+      }
+      loadDashboardData()
+    } else {
+      console.log('Waiting for data:', { hasUserData, hasEmployeeData, isRoleContextReady })
+    }
+  }, [currentUser, currentEmployee, employee, loading])
+  
+  // Separate effect to watch userRole changes (for refresh scenarios)
+  useEffect(() => {
+    // Only trigger a reload if we've already loaded data once and the role changes
+    if (hasLoadedData.current && userRole) {
+      console.log('User role changed after initial load, may need to update UI')
+      // Don't reload data, just force a re-render by updating state if needed
+      setDashboardLoading(false)
+    }
+  }, [userRole])
   
   const loadDashboardData = async () => {
+    // Prevent concurrent calls
+    if (isLoadingData.current) {
+      console.log('Already loading data, skipping...')
+      return
+    }
+    
     try {
+      isLoadingData.current = true
       setDashboardLoading(true)
       
       // Ensure we have current user data
@@ -163,14 +209,21 @@ const HRDashboard: React.FC = () => {
       
       if (!authUser || !authUser.isAuthenticated) {
         console.warn('No authenticated user found')
+        setDashboardLoading(false)
+        isLoadingData.current = false
         return
       }
 
-      if (!currentEmployee) {
+      // Use employee from context if currentEmployee is not set
+      const employeeToUse = currentEmployee || employee
+      if (!employeeToUse) {
         console.warn('No employee data found')
+        setDashboardLoading(false)
+        isLoadingData.current = false
         return
       }
-        console.log('Loading dashboard data for employee:', currentEmployee.firstName, currentEmployee.lastName)
+        
+      console.log('Loading dashboard data for employee:', employeeToUse.firstName || employeeToUse.first_name, employeeToUse.lastName || employeeToUse.last_name)
       
       // Load user's own leave requests with detailed breakdown
       const myRequestsData = await leaveService.getMyLeaveRequests()
@@ -223,6 +276,9 @@ const HRDashboard: React.FC = () => {
       setPendingRequests(0)
     } finally {
       setDashboardLoading(false)
+      isLoadingData.current = false
+      hasLoadedData.current = true
+      console.log('Dashboard data loading complete')
     }
   }
   
@@ -254,19 +310,29 @@ const HRDashboard: React.FC = () => {
   }  // Refresh dashboard data by re-fetching from backend
   const refreshDashboard = async () => {
     console.log('Manual refresh triggered')
+    
+    // Reset the loaded flag to allow reload
+    hasLoadedData.current = false
+    isLoadingData.current = false
+    
     setDashboardLoading(true)
     
     const authUser = getCurrentAuthUser()
     if (authUser?.uid && authUser.isAuthenticated) {
       // Re-fetch employee data
-      await fetchEmployeeFromBackend(authUser.uid)
+      const fetchedEmployee = await fetchEmployeeFromBackend(authUser.uid)
+      
+      // Refresh the role context as well
+      if (fetchedEmployee) {
+        await refreshRole()
+      }
+      
       // Force reload dashboard data
       await loadDashboardData()
     } else {
       console.warn('No authenticated user found for refresh')
+      setDashboardLoading(false)
     }
-    
-    setDashboardLoading(false)
   }
   
   const navigateTo = (path: string, moduleName: string) => {
@@ -385,7 +451,8 @@ const HRDashboard: React.FC = () => {
     return modules
   }
   
-  if (loading || fetchingEmployeeData || (!currentUser?.isAuthenticated)) {
+  // Show loading state while waiting for role context or employee data
+  if (loading || fetchingEmployeeData) {
     return (
       <IonPage>
         <IonContent className="ion-padding ion-text-center">
@@ -394,8 +461,27 @@ const HRDashboard: React.FC = () => {
             <IonText>
               <p>Loading dashboard...</p>
               <p style={{ fontSize: '14px', color: 'gray' }}>
-                Initializing user session...
+                {loading && 'Loading role and permissions...'}
+                {fetchingEmployeeData && 'Fetching employee data...'}
+                {!loading && !fetchingEmployeeData && 'Initializing user session...'}
               </p>
+            </IonText>
+          </div>
+        </IonContent>
+      </IonPage>
+    )
+  }
+  
+  // If not authenticated, redirect should happen from AuthGuard
+  // But show a brief loading state just in case
+  if (!currentUser?.isAuthenticated) {
+    return (
+      <IonPage>
+        <IonContent className="ion-padding ion-text-center">
+          <div style={{ marginTop: '50%' }}>
+            <IonSpinner name="crescent" color="primary" />
+            <IonText>
+              <p>Checking authentication...</p>
             </IonText>
           </div>
         </IonContent>
@@ -877,10 +963,7 @@ const HRDashboard: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>        {/* Role Debug Information (Development Only) */}
-        {process.env.NODE_ENV === 'development' && (
-          <RoleDebugger />
-        )}
-
+     
         {/* Logout Confirmation Alert */}
         <IonAlert
           isOpen={showLogoutAlert}

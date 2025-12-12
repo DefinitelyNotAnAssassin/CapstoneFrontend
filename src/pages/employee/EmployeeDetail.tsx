@@ -44,10 +44,10 @@ import {
 import { call, mail, home, business, calendar, person, school, trophy, document, people, create, time, checkmark, close, refresh, save, pencil } from "ionicons/icons"
 import {
   type EmployeeInformation,
-} from "../data/data"
-import employeeService  from "../services/EmployeeService"
-import leaveService from "../services/LeaveService"
-import AuthService from "../services/AuthService"
+} from "../../data/data"
+import employeeService  from "../../services/EmployeeService"
+import leaveService from "../../services/LeaveService"
+import AuthService from "../../services/AuthService"
 
 interface RouteParams {
   id: string
@@ -98,7 +98,7 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = (props) => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   // Set your API base URL here
-  const API_BASE_URL = (window as any).API_BASE_URL || 'http://127.0.0.1:8000/api';
+  const API_BASE_URL = (window as any).API_BASE_URL || 'http://dharklike.pythonanywhere.com/api';
 
   // Load employee data on component mount
   useEffect(() => {

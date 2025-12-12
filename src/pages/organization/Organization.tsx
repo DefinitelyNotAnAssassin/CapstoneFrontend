@@ -31,7 +31,7 @@ import {
   IonCol,
 } from "@ionic/react"
 import { call, mail, chevronForward } from "ionicons/icons"
-import { employees, departments, offices, programs, positions, type EmployeeInformation } from "../data/data"
+import { employees, departments, offices, programs, positions, type EmployeeInformation } from "../../data/data"
 
 const Organization: React.FC = () => {
   const [segment, setSegment] = useState<"academic" | "administrative">("academic")
