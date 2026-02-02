@@ -29,6 +29,8 @@ import {
   IonRefresherContent,
   IonAlert,
   IonToast,
+  IonButtons,
+  IonMenuButton,
 } from "@ionic/react"
 import { add, search, filter, refresh, checkmarkCircleOutline, shieldOutline } from "ionicons/icons"
 import employeeService from "../../services/EmployeeServiceNew"
@@ -215,9 +217,9 @@ const EmployeeDirectory: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar color="primary">
-          <IonButton slot="start" routerLink="/hr-dashboard" color="primary">
-            Back
-          </IonButton>
+          <IonButtons slot="start">
+            <IonMenuButton />
+          </IonButtons>
           <IonTitle>Employee Directory</IonTitle>
         </IonToolbar>
       </IonHeader>

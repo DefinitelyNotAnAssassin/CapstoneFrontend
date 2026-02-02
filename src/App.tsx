@@ -22,8 +22,8 @@ import OrganizationManagement from "./pages/organization/OrganizationManagement"
 import LeaveCreditManagement from "./pages/leave/LeaveCreditManagement"
 import Reports from "./pages/Reports"
 import AuditTrail from "./pages/audit-trail/AuditTrail"
-import EmailOTP from "./pages/EmailOTP"
-import VerifyOTP from "./pages/VerifyOTP"
+import EmailOTP from "./pages/otp/EmailOTP"
+import VerifyOTP from "./pages/otp/VerifyOTP"
 import FirebaseSetup from "./pages/FirebaseSetup"
 import AuthGuard from "./components/AuthGuard"
 import { RoleProvider } from "./contexts/RoleContext"
@@ -55,89 +55,89 @@ const App: React.FC = () => (
     <AuthProvider>
       <RoleProvider>
         <IonReactRouter>
-          <IonRouterOutlet>
-            {/* Public routes */}
-            <Route path="/sign-in" component={SignIn} exact={true} />
-            <Route path="/sign-in-direct" component={SignInDirect} exact={true} />
-            <Route path="/email-otp" component={EmailOTP} exact={true} />
-            <Route path="/verify-otp" component={VerifyOTP} exact={true} />
-            <Route path="/home" component={Home} exact={true} />
-            
-            {/* Protected routes - available to all authenticated users */}
-            <AuthGuard path="/hr-dashboard" component={HRDashboard} exact={true} />
-            <AuthGuard path="/leave-request" component={LeaveRequest} exact={true} />
-            
-            {/* Role-based protected routes */}
-            <AuthGuard 
-              path="/leave-approval" 
-              component={LeaveApproval} 
-              requirePermission="approveRequests"
-              exact={true} 
-            />
-            <AuthGuard 
-              path="/employee-directory" 
-              component={EmployeeDirectory} 
-              exact={true} 
-            />
-            <AuthGuard 
-              path="/employee-management" 
-              component={EmployeeManagement} 
-              exact={true} 
-            />
-            <AuthGuard 
-              path="/employee-detail/:id" 
-              component={EmployeeDetail} 
-              requirePermission="manageEmployees"
-              exact={true} 
-            />
-            <AuthGuard 
-              path="/employee-add" 
-              component={EmployeeAdd} 
-              requirePermission="manageEmployees"
-              exact={true} 
-            />
-            <AuthGuard 
-              path="/organization-management" 
-              component={OrganizationManagement} 
-              requirePermission="manageEmployees"
-              exact={true} 
-            />
-            <AuthGuard 
-              path="/leave-policy-management" 
-              component={LeavePolicyManagement} 
-              requirePermission="manageLeavePolicies"
-              exact={true} 
-            />
-            <AuthGuard 
-              path="/leave-credit-management" 
-              component={LeaveCreditManagement} 
-              requirePermission="manageLeaveCredits"
-              exact={true} 
-            />
-            <AuthGuard 
-              path="/reports" 
-              component={Reports} 
-              requirePermission="viewReports"
-              exact={true} 
-            />
-            <AuthGuard 
-              path="/audit-trail" 
-              component={AuditTrail} 
-              requirePermission="viewReports"
-              exact={true} 
-            />
-            
-            {/* Legacy routes - keeping for backwards compatibility */}
-            <AuthGuard path="/organization" component={Organization} exact={true} />
-            <AuthGuard path="/leave-approval-new" component={LeaveApprovalNew} exact={true} />
-            <AuthGuard path="/leave-management" component={LeaveManagement} exact={true} />
-            <AuthGuard path="/faculty-loading" component={FacultyLoading} exact={true} />
-            <AuthGuard path="/leave-request-new" component={LeaveRequestNew} exact={true} />
-            <AuthGuard path="/firebase-setup" component={FirebaseSetup} exact={true} />
-            
-            {/* Default route */}
-            <Route exact path="/" render={() => <Redirect to="/sign-in" />} />
-          </IonRouterOutlet>
+          <IonRouterOutlet id="main-content">
+              {/* Public routes */}
+              <Route path="/sign-in" component={SignIn} exact={true} />
+              <Route path="/sign-in-direct" component={SignInDirect} exact={true} />
+              <Route path="/email-otp" component={EmailOTP} exact={true} />
+              <Route path="/verify-otp" component={VerifyOTP} exact={true} />
+              <Route path="/home" component={Home} exact={true} />
+              
+              {/* Protected routes - available to all authenticated users */}
+              <AuthGuard path="/hr-dashboard" component={HRDashboard} exact={true} />
+              <AuthGuard path="/leave-request" component={LeaveRequest} exact={true} />
+              
+              {/* Role-based protected routes */}
+              <AuthGuard 
+                path="/leave-approval" 
+                component={LeaveApproval} 
+                requirePermission="approveRequests"
+                exact={true} 
+              />
+              <AuthGuard 
+                path="/employee-directory" 
+                component={EmployeeDirectory} 
+                exact={true} 
+              />
+              <AuthGuard 
+                path="/employee-management" 
+                component={EmployeeManagement} 
+                exact={true} 
+              />
+              <AuthGuard 
+                path="/employee-detail/:id" 
+                component={EmployeeDetail} 
+                requirePermission="manageEmployees"
+                exact={true} 
+              />
+              <AuthGuard 
+                path="/employee-add" 
+                component={EmployeeAdd} 
+                requirePermission="manageEmployees"
+                exact={true} 
+              />
+              <AuthGuard 
+                path="/organization-management" 
+                component={OrganizationManagement} 
+                requirePermission="manageEmployees"
+                exact={true} 
+              />
+              <AuthGuard 
+                path="/leave-policy-management" 
+                component={LeavePolicyManagement} 
+                requirePermission="manageLeavePolicies"
+                exact={true} 
+              />
+              <AuthGuard 
+                path="/leave-credit-management" 
+                component={LeaveCreditManagement} 
+                requirePermission="manageLeaveCredits"
+                exact={true} 
+              />
+              <AuthGuard 
+                path="/reports" 
+                component={Reports} 
+                requirePermission="viewReports"
+                exact={true} 
+              />
+              <AuthGuard 
+                path="/audit-trail" 
+                component={AuditTrail} 
+                requirePermission="viewReports"
+                exact={true} 
+              />
+              
+              {/* Legacy routes - keeping for backwards compatibility */}
+              <AuthGuard path="/organization" component={Organization} exact={true} />
+              <AuthGuard path="/leave-approval-new" component={LeaveApprovalNew} exact={true} />
+              <AuthGuard path="/leave-management" component={LeaveManagement} exact={true} />
+              <AuthGuard path="/faculty-loading" component={FacultyLoading} exact={true} />
+              <AuthGuard path="/leave-request-new" component={LeaveRequestNew} exact={true} />
+              <AuthGuard path="/firebase-setup" component={FirebaseSetup} exact={true} />
+              
+              {/* Default route */}
+              <Route exact path="/" render={() => <Redirect to="/sign-in" />} />
+            </IonRouterOutlet>
         </IonReactRouter>
       </RoleProvider>
     </AuthProvider>

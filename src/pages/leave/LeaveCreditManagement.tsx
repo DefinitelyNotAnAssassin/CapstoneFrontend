@@ -9,7 +9,7 @@ import {
   IonTitle,
   IonToolbar,
   IonButtons,
-  IonBackButton,
+  IonMenuButton,
   IonCard,
   IonCardHeader,
   IonCardTitle,
@@ -522,7 +522,7 @@ const LeaveCreditManagement: React.FC = () => {
       <IonHeader>
         <IonToolbar color="primary">
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/hr-dashboard" />
+            <IonMenuButton />
           </IonButtons>
           <IonTitle>Leave Credit Management</IonTitle>
           <IonButtons slot="end">

@@ -1,0 +1,162 @@
+/* Main Layout Styles */
+
+/* Split Pane */
+ion-split-pane {
+  --side-width: 280px;
+  --side-min-width: 280px;
+  --side-max-width: 280px;
+}
+
+/* Main Page */
+.main-page {
+  --background: #f5f6f8;
+}
+
+/* Header */
+.main-header ion-toolbar {
+  --background: white;
+  --border-color: rgba(0, 0, 0, 0.08);
+}
+
+.main-header ion-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--ion-color-dark);
+}
+
+/* Menu Button - Hamburger */
+.menu-button {
+  --color: var(--ion-color-dark);
+}
+
+.menu-button::part(native) {
+  padding: 8px;
+}
+
+/* 
+ * IonSplitPane with when="md" automatically handles menu button visibility:
+ * - On screens >= 768px (md breakpoint): sidebar is always visible, menu button hidden by IonMenuButton autoHide
+ * - On screens < 768px: sidebar slides in from hamburger menu, menu button visible
+ * 
+ * We use autoHide={false} on IonMenuButton to let Ionic handle the visibility based on split pane state
+ */
+
+/* Main Content */
+.main-content {
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 16px;
+  --padding-bottom: 24px;
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 991px) {
+  .main-content {
+    --padding-start: 24px;
+    --padding-end: 24px;
+  }
+}
+
+/* Desktop adjustments */
+@media (min-width: 992px) {
+  .main-content {
+    --padding-start: 32px;
+    --padding-end: 32px;
+    --padding-top: 24px;
+  }
+  
+  .main-header ion-title {
+    padding-left: 8px;
+  }
+}
+
+/* Large desktop */
+@media (min-width: 1200px) {
+  ion-split-pane {
+    --side-width: 300px;
+    --side-min-width: 300px;
+    --side-max-width: 300px;
+  }
+}
+
+/* Page transition animations */
+.main-page ion-content {
+  opacity: 1;
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Content Cards */
+.content-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+/* Section Headers */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+  margin: 0;
+}
+
+.section-subtitle {
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+  margin: 4px 0 0 0;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.empty-state-icon {
+  font-size: 64px;
+  color: var(--ion-color-medium);
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+  margin: 0 0 8px 0;
+}
+
+.empty-state-text {
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+  margin: 0;
+  max-width: 300px;
+}
+
+/* Loading States */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.loading-text {
+  margin-top: 16px;
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+}

@@ -27,7 +27,7 @@ import {
 } from "@ionic/react"
 import { mailOutline, arrowForwardOutline } from "ionicons/icons"
 import { useHistory } from "react-router-dom"
-import { useAudit } from "../hooks/useAudit"
+import { useAudit } from "../../hooks/useAudit"
 import "./EmailOTP.css"
 
 const EmailOTP: React.FC = () => {

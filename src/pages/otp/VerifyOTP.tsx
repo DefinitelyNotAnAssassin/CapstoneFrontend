@@ -25,7 +25,7 @@ import {
 } from "@ionic/react"
 import { checkmarkCircleOutline } from "ionicons/icons"
 import { useHistory } from "react-router-dom"
-import { useAudit } from "../hooks/useAudit"
+import { useAudit } from "../../hooks/useAudit"
 import "./EmailOTP.css"
 
 interface HTMLIonInputElement extends HTMLElement {

@@ -1,0 +1,482 @@
+/* Dashboard Styling */
+
+.dashboard-content {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+/* Loading State */
+.loading-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.loading-container {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.loading-message {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1a202c;
+}
+
+.loading-submessage {
+  font-size: 0.875rem;
+  color: #718096;
+  margin: 0;
+}
+
+/* Welcome Banner */
+.welcome-banner-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+  border-radius: 16px;
+  margin-bottom: 2rem;
+  color: white;
+}
+
+.welcome-banner-card ion-card-content {
+  padding: 2rem;
+}
+
+.welcome-avatar {
+  width: 80px;
+  height: 80px;
+  border: 4px solid white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.welcome-text-column {
+  padding: 0 2rem;
+}
+
+.greeting-text {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: white;
+  letter-spacing: -0.5px;
+}
+
+.user-name {
+  background: linear-gradient(90deg, #fff 0%, #e6e6ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.position-title {
+  font-size: 1rem;
+  margin: 0.25rem 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.department-info {
+  font-size: 0.875rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.status-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.role-badge {
+  --background: rgba(255, 255, 255, 0.2);
+  --color: white;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.status-badge {
+  --background: rgba(255, 255, 255, 0.2);
+  --color: white;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.employee-id-text {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+/* Stats Section */
+.stats-section {
+  margin-bottom: 3rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 1.5rem 0;
+  color: #1a202c;
+  letter-spacing: -0.5px;
+}
+
+.stat-col {
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-left: 5px solid;
+  height: 100%;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card-primary {
+  border-left-color: #667eea;
+}
+
+.stat-card-success {
+  border-left-color: #48bb78;
+}
+
+.stat-card-danger {
+  border-left-color: #f56565;
+}
+
+.stat-card-warning {
+  border-left-color: #ed8936;
+}
+
+.stat-card-secondary {
+  border-left-color: #9f7aea;
+}
+
+.stat-card ion-card-content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.stat-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.stat-card-success .stat-icon-wrapper {
+  background: rgba(72, 187, 120, 0.1);
+}
+
+.stat-card-danger .stat-icon-wrapper {
+  background: rgba(245, 101, 101, 0.1);
+}
+
+.stat-card-warning .stat-icon-wrapper {
+  background: rgba(237, 137, 54, 0.1);
+}
+
+.stat-card-secondary .stat-icon-wrapper {
+  background: rgba(159, 122, 234, 0.1);
+}
+
+.stat-icon {
+  font-size: 1.75rem;
+  color: #667eea;
+}
+
+.stat-card-success .stat-icon {
+  color: #48bb78;
+}
+
+.stat-card-danger .stat-icon {
+  color: #f56565;
+}
+
+.stat-card-warning .stat-icon {
+  color: #ed8936;
+}
+
+.stat-card-secondary .stat-icon {
+  color: #9f7aea;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-title {
+  font-size: 0.875rem;
+  color: #718096;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  color: #1a202c;
+  line-height: 1;
+}
+
+.stat-desc {
+  font-size: 0.75rem;
+  color: #a0aec0;
+  margin: 0.5rem 0 0 0;
+}
+
+/* Modules Section */
+.modules-section {
+  margin-bottom: 2rem;
+}
+
+.module-col {
+  margin-bottom: 1.5rem;
+}
+
+.module-button {
+  --background: transparent;
+  --background-activated: transparent;
+  --background-focused: transparent;
+  --background-hover: transparent;
+  padding: 0;
+  height: auto;
+}
+
+.module-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  border-top: 3px solid;
+}
+
+.module-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.15);
+}
+
+.module-card-primary {
+  border-top-color: #667eea;
+}
+
+.module-card-success {
+  border-top-color: #48bb78;
+}
+
+.module-card-danger {
+  border-top-color: #f56565;
+}
+
+.module-card-warning {
+  border-top-color: #ed8936;
+}
+
+.module-card-secondary {
+  border-top-color: #9f7aea;
+}
+
+.module-card-tertiary {
+  border-top-color: #38b2ac;
+}
+
+.module-card-dark {
+  border-top-color: #2d3748;
+}
+
+.module-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  padding: 2rem 1.5rem;
+  min-height: 180px;
+  justify-content: center;
+}
+
+.module-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.module-card-success .module-icon-wrapper {
+  background: rgba(72, 187, 120, 0.1);
+}
+
+.module-card-danger .module-icon-wrapper {
+  background: rgba(245, 101, 101, 0.1);
+}
+
+.module-card-warning .module-icon-wrapper {
+  background: rgba(237, 137, 54, 0.1);
+}
+
+.module-card-secondary .module-icon-wrapper {
+  background: rgba(159, 122, 234, 0.1);
+}
+
+.module-card-tertiary .module-icon-wrapper {
+  background: rgba(56, 178, 172, 0.1);
+}
+
+.module-card-dark .module-icon-wrapper {
+  background: rgba(45, 55, 72, 0.1);
+}
+
+.module-icon {
+  font-size: 2rem;
+  color: #667eea;
+}
+
+.module-card-success .module-icon {
+  color: #48bb78;
+}
+
+.module-card-danger .module-icon {
+  color: #f56565;
+}
+
+.module-card-warning .module-icon {
+  color: #ed8936;
+}
+
+.module-card-secondary .module-icon {
+  color: #9f7aea;
+}
+
+.module-card-tertiary .module-icon {
+  color: #38b2ac;
+}
+
+.module-card-dark .module-icon {
+  color: #2d3748;
+}
+
+.module-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0;
+  color: #1a202c;
+  letter-spacing: -0.25px;
+}
+
+.module-description {
+  font-size: 0.875rem;
+  color: #718096;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.module-badge {
+  background: rgba(102, 126, 234, 0.15);
+  color: #667eea;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  margin-top: 0.5rem;
+  display: inline-block;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 1rem;
+  }
+
+  .welcome-banner-card ion-card-content {
+    padding: 1.5rem;
+  }
+
+  .greeting-text {
+    font-size: 1.375rem;
+  }
+
+  .status-column {
+    align-items: flex-start;
+  }
+
+  .stat-card ion-card-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .stat-icon-wrapper {
+    align-self: flex-start;
+  }
+
+  .module-card-content {
+    min-height: 160px;
+    padding: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-content {
+    padding: 0.75rem;
+  }
+
+  .greeting-text {
+    font-size: 1.125rem;
+  }
+
+  .position-title {
+    font-size: 0.875rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .module-icon {
+    font-size: 1.5rem;
+  }
+
+  .module-title {
+    font-size: 1rem;
+  }
+
+  .welcome-avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .welcome-text-column {
+    padding: 0 1rem;
+  }
+}

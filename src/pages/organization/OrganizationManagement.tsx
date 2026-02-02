@@ -9,7 +9,7 @@ import {
   IonTitle,
   IonToolbar,
   IonButtons,
-  IonBackButton,
+  IonMenuButton,
   IonSegment,
   IonSegmentButton,
   IonLabel,
@@ -290,7 +290,7 @@ const OrganizationManagement: React.FC = () => {
       <IonHeader>
         <IonToolbar color="primary">
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/hr-dashboard" />
+            <IonMenuButton />
           </IonButtons>
           <IonTitle>Organization Management</IonTitle>
         </IonToolbar>

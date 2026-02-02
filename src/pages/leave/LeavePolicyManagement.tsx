@@ -26,7 +26,7 @@ import {
   IonFabButton,
   IonModal,
   IonButtons,
-  IonBackButton,
+  IonMenuButton,
   IonFooter,
   IonSpinner,
   IonText,
@@ -182,7 +182,7 @@ const LeavePolicyManagement: React.FC = () => {
       <IonHeader>
         <IonToolbar color="primary">
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/home" />
+            <IonMenuButton />
           </IonButtons>
           <IonTitle>Leave Policy Management</IonTitle>
         </IonToolbar>

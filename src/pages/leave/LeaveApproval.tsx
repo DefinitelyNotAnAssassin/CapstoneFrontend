@@ -26,7 +26,7 @@ import {
   IonSegmentButton,
   IonModal,
   IonButtons,
-  IonBackButton,
+  IonMenuButton,
   IonSpinner,
   IonText,
   IonChip,
@@ -172,7 +172,7 @@ const LeaveApproval: React.FC = () => {
   };
 
   // Set your API base URL here
-  const API_BASE_URL = (window as any).API_BASE_URL || 'http://dharklike.pythonanywhere.com/api';
+  const API_BASE_URL = (window as any).API_BASE_URL || 'https://dharklike.pythonanywhere.com/api';
   // Fetch employee details and leave credit balance for the selected request
   useEffect(() => {
     const fetchEmployeeAndCredit = async () => {
@@ -224,7 +224,7 @@ const LeaveApproval: React.FC = () => {
         <IonHeader>
           <IonToolbar>
             <IonButtons slot="start">
-              <IonBackButton defaultHref="/hr-dashboard" />
+              <IonMenuButton />
             </IonButtons>
             <IonTitle>Leave Approval</IonTitle>
           </IonToolbar>
@@ -265,7 +265,7 @@ const LeaveApproval: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/hr-dashboard" />
+            <IonMenuButton />
           </IonButtons>
           <IonTitle>Leave Approval</IonTitle>
         </IonToolbar>

@@ -30,7 +30,7 @@ import {
   IonSegmentButton,
   IonModal,
   IonButtons,
-  IonBackButton,
+  IonMenuButton,
   IonSpinner,
   IonText,
   IonChip,
@@ -227,7 +227,7 @@ const LeaveRequest: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/hr-dashboard" />
+            <IonMenuButton />
           </IonButtons>
           <IonTitle>Leave Management</IonTitle>
         </IonToolbar>

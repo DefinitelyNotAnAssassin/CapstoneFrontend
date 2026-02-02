@@ -9,7 +9,7 @@ import {
   IonTitle,
   IonToolbar,
   IonButtons,
-  IonBackButton,
+  IonMenuButton,
   IonButton,
   IonIcon,
   IonSelect,
@@ -129,7 +129,7 @@ const AuditTrail: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/hr-dashboard" />
+            <IonMenuButton />
           </IonButtons>
           <IonTitle>Audit Trail</IonTitle>
           <IonButtons slot="end">

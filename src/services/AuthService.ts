@@ -1,6 +1,6 @@
 // AuthService.ts - Django API-based authentication service
 
-const API_BASE_URL = 'http://dharklike.pythonanywhere.com/api/auth';
+const API_BASE_URL = 'https://dharklike.pythonanywhere.com/api/auth';
 
 export interface AuthUser {
   uid: string;

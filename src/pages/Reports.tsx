@@ -9,7 +9,7 @@ import {
   IonTitle,
   IonToolbar,
   IonButtons,
-  IonBackButton,
+  IonMenuButton,
   IonGrid,
   IonRow,
   IonCol,
@@ -202,7 +202,7 @@ const Reports: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/hr-dashboard" />
+            <IonMenuButton />
           </IonButtons>
           <IonTitle>Reports</IonTitle>
         </IonToolbar>
