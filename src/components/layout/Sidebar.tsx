@@ -85,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <IonToolbar color="white">
         <img src="sdca-logo.png" alt="SDCA Logo"  />
           <IonTitle className="flex flex-col items-center text-center ">
-              <h1 className="text-3xl ">SDCA HRIS</h1>
+              <h1 className="text-3xl font-mono">SDCA HRIS</h1>
               <h1 className="logo-subtitle">Leave Management</h1>
           </IonTitle>
         </IonToolbar>

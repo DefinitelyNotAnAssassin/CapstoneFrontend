@@ -27,6 +27,15 @@ import { WelcomeBanner } from "@components/dashboard//WelcomeBanner"
 import { StatsCards } from "@components/dashboard//StatsCard"
 import { LoadingState } from "@components/dashboard//LoadingState"
 import { LogoutAlert } from "@components/dashboard//LogoutAlert"
+import { QuickActions } from "@components/dashboard/QuickActions"
+import { RecentActivity } from "@components/dashboard/RecentActivity"
+import { UpcomingLeaves, Announcements } from "@components/dashboard/UpcomingLeaves"
+import {
+  LeaveBalanceChart,
+  LeaveTypeBreakdownChart,
+  RequestStatusChart,
+  MonthlyTrendChart,
+} from "@components/dashboard/LeaveCharts"
 
 const HRDashboard: React.FC = () => {
   const history = useHistory()
@@ -426,6 +435,9 @@ const HRDashboard: React.FC = () => {
     })
   }
 
+  // Determine if user is HR
+  const isHRUser = currentEmployee?.isHR || userRole?.level === -1 || userRole?.title === "HR Administrator"
+
   return (
     <MainLayout 
       title={getDashboardTitle()}
@@ -433,21 +445,95 @@ const HRDashboard: React.FC = () => {
       onRefresh={refreshDashboard}
       isLoading={dashboardLoading} 
     >
-      {/* Welcome Banner */}
-      <div className="ion-hide-md-up">
+      <div className="p-2 md:p-4 space-y-6">
+        {/* Welcome Banner */}
         <WelcomeBanner
           userName={currentUser?.displayName?.split(" ")[0] || currentEmployee?.firstName || "User"}
           position={currentEmployee?.position_title || userRole?.title || "Employee"}
           department={currentEmployee?.department_name || "Department"}
           employeeId={currentEmployee?.employeeId || currentUser?.uid || "N/A"}
           profileImage={currentEmployee?.profileImage}
-          isHRUser={currentEmployee?.isHR || userRole?.level === -1 || userRole?.title === "HR Administrator"}
+          isHRUser={isHRUser}
           isOnline={currentUser?.isAuthenticated || false}
         />
-      </div>
 
-      {/* Stats Cards */}
-      <StatsCards stats={dashboardStats} />
+        {/* Quick Actions */}
+        <QuickActions
+          isHRUser={isHRUser}
+          canApprove={userRole?.canApprove || false}
+          hasPermission={hasPermission}
+        />
+
+        {/* Stats Cards */}
+        <StatsCards stats={dashboardStats} />
+
+        {/* Charts Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="w-1 h-6 bg-purple-500 rounded-full"></span>
+            Analytics & Insights
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {/* Leave Balance Doughnut Chart */}
+            <LeaveBalanceChart
+              leaveCreditsBreakdown={leaveCreditsBreakdown}
+              totalCredits={totalLeaveCredits}
+              usedCredits={usedLeaveCredits}
+            />
+
+            {/* Leave Type Breakdown Bar Chart */}
+            {leaveCreditsBreakdown.length > 0 && (
+              <LeaveTypeBreakdownChart leaveCreditsBreakdown={leaveCreditsBreakdown} />
+            )}
+
+            {/* Request Status Distribution */}
+            <RequestStatusChart
+              approvedRequests={approvedRequests}
+              rejectedRequests={rejectedRequests}
+              pendingRequests={pendingRequests}
+            />
+          </div>
+        </div>
+
+        {/* Monthly Trend - Full Width */}
+        <div className="mb-8">
+          <MonthlyTrendChart />
+        </div>
+
+        {/* Bottom Section - Activity, Upcoming Leaves, Announcements */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Recent Activity */}
+          <RecentActivity />
+
+          {/* Upcoming Leaves */}
+          <UpcomingLeaves />
+
+          {/* Announcements */}
+          <Announcements />
+        </div>
+
+        {/* Footer Stats Summary */}
+        <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-6 text-white">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div>
+              <p className="text-3xl font-bold text-blue-400">{totalLeaveCredits}</p>
+              <p className="text-sm text-gray-400 mt-1">Total Credits</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-green-400">{Math.round(leaveBalance * 10) / 10}</p>
+              <p className="text-sm text-gray-400 mt-1">Remaining</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-red-400">{usedLeaveCredits}</p>
+              <p className="text-sm text-gray-400 mt-1">Used</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-amber-400">{myRequests}</p>
+              <p className="text-sm text-gray-400 mt-1">Total Requests</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Logout Alert */}
       <LogoutAlert
