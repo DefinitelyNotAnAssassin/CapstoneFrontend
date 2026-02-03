@@ -4,10 +4,6 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import {
   IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
   IonSearchbar,
   IonList,
   IonItem,
@@ -29,14 +25,13 @@ import {
   IonRefresherContent,
   IonAlert,
   IonToast,
-  IonButtons,
-  IonMenuButton,
 } from "@ionic/react"
 import { add, search, filter, refresh, checkmarkCircleOutline, shieldOutline } from "ionicons/icons"
 import employeeService from "../../services/EmployeeServiceNew"
 import { useRole } from "../../contexts/RoleContext"
 import type { EmployeeInformation } from "../../data/data"
 import RoleDebugger from "../../components/RoleDebugger"
+import { MainLayout } from "@components/layout"
 
 const EmployeeDirectory: React.FC = () => {
   const { userRole, employee: currentEmployee, hasPermission } = useRole()
@@ -214,17 +209,13 @@ const EmployeeDirectory: React.FC = () => {
     return employee.department_name || "Unknown Department"
   };
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>Employee Directory</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-
-      <IonContent>        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+    <MainLayout 
+      title="Employee Directory"
+      showRefresh={true}
+      onRefresh={() => loadEmployees()}
+      isLoading={isLoading}
+    >
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent pullingIcon={refresh} refreshingSpinner="circles" />
         </IonRefresher>
         
@@ -350,8 +341,7 @@ const EmployeeDirectory: React.FC = () => {
           duration={2000}
           color="success"
         />
-      </IonContent>
-    </IonPage>
+    </MainLayout>
   )
 }
 

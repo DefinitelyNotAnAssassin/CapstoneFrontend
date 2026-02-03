@@ -115,6 +115,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     if (employee?.isHR || userRole?.level === -1) {
       return "HR Administrator"
     }
+
+    console.log("Determining user role:", { userRole, employee })
+
     return userRole?.title || employee?.position_title || "Employee"
   }
 

@@ -11,7 +11,6 @@ import Organization from "./pages/organization/Organization"
 import FacultyLoading from "./pages/faculty/FacultyLoading"
 import LeavePolicyManagement from "./pages/leave/LeavePolicyManagement"
 import LeaveApproval from "./pages/leave/LeaveApproval"
-import LeaveApprovalNew from "./pages/leave/LeaveApprovalNew"
 import LeaveManagement from "./pages/leave/LeaveManagement"
 import LeaveRequest from "./pages/leave/LeaveRequest"
 import LeaveRequestNew from "./pages/leave/LeaveRequestNew"
@@ -129,7 +128,6 @@ const App: React.FC = () => (
               
               {/* Legacy routes - keeping for backwards compatibility */}
               <AuthGuard path="/organization" component={Organization} exact={true} />
-              <AuthGuard path="/leave-approval-new" component={LeaveApprovalNew} exact={true} />
               <AuthGuard path="/leave-management" component={LeaveManagement} exact={true} />
               <AuthGuard path="/faculty-loading" component={FacultyLoading} exact={true} />
               <AuthGuard path="/leave-request-new" component={LeaveRequestNew} exact={true} />

@@ -4,10 +4,6 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import {
   IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
   IonSearchbar,
   IonList,
   IonItem,
@@ -33,8 +29,6 @@ import {
   IonRow,
   IonCol,
   IonText,
-  IonButtons,
-  IonMenuButton,
   IonSegment,
   IonSegmentButton,
 } from "@ionic/react"
@@ -54,6 +48,7 @@ import {
 import employeeService from "../../services/EmployeeServiceNew"
 import { useRole } from "../../contexts/RoleContext"
 import type { EmployeeInformation } from "../../data/data"
+import { MainLayout } from "@components/layout"
 
 const EmployeeManagement: React.FC = () => {
   const { userRole, employee: currentEmployee, hasPermission } = useRole()
@@ -204,16 +199,7 @@ const EmployeeManagement: React.FC = () => {
 
   if (!canManage) {
     return (
-      <IonPage>
-        <IonHeader>
-          <IonToolbar color="primary">
-            <IonButtons slot="start">
-              <IonMenuButton />
-            </IonButtons>
-            <IonTitle>Employee Management</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent>
+      <MainLayout title="Employee Management">
           <IonCard>
             <IonCardContent>
               <div style={{ textAlign: 'center', padding: '2rem' }}>
@@ -226,23 +212,17 @@ const EmployeeManagement: React.FC = () => {
               </div>
             </IonCardContent>
           </IonCard>
-        </IonContent>
-      </IonPage>
+      </MainLayout>
     )
   }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>Employee Management</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-
-      <IonContent>
+    <MainLayout 
+      title="Employee Management"
+      showRefresh={true}
+      onRefresh={() => loadManagedEmployees()}
+      isLoading={isLoading}
+    >
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent pullingIcon={refresh} refreshingSpinner="circles" />
         </IonRefresher>
@@ -385,8 +365,7 @@ const EmployeeManagement: React.FC = () => {
           duration={2000}
           position="bottom"
         />
-      </IonContent>
-    </IonPage>
+    </MainLayout>
   )
 }
 

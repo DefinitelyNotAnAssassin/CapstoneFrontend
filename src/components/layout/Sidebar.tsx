@@ -82,7 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <IonMenu contentId={contentId} type="overlay" className="sidebar-menu shadow " swipeGesture={true}>
       <IonHeader className="sidebar-header">
-        <IonToolbar color="white">
+        <IonToolbar color="white" className="mt-4 p-2">
         <img src="sdca-logo.png" alt="SDCA Logo"  />
           <IonTitle className="flex flex-col items-center text-center ">
               <h1 className="text-3xl font-mono">SDCA HRIS</h1>

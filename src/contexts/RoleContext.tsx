@@ -1,5 +1,5 @@
 // Role-Based Access Control Context
-// Manages user permissions and role-based UI rendering
+// Manages user permissions and role-based UI rendering for two-step leave approval
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AuthService from '../services/AuthService';
@@ -12,7 +12,8 @@ interface EmployeeRole {
   approvalScope: 'none' | 'program' | 'department' | 'all';
   permissions: {
     viewAllRequests: boolean;
-    approveRequests: boolean;
+    approveRequests: boolean;        // Supervisor pre-approval
+    hrFinalApproval: boolean;        // HR final approval (new)
     manageLeaveCredits: boolean;
     manageLeavePolicies: boolean;
     viewReports: boolean;
@@ -37,6 +38,7 @@ const defaultRole: EmployeeRole = {
   permissions: {
     viewAllRequests: false,
     approveRequests: false,
+    hrFinalApproval: false,
     manageLeaveCredits: false,
     manageLeavePolicies: false,
     viewReports: false,
@@ -71,7 +73,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);  const determineRole = (employeeData: any): EmployeeRole => {
     if (!employeeData) return defaultRole;
 
-    // Check if employee is HR first - HR has super admin privileges
+    // Check if employee is HR first - HR has super admin privileges including final approval
     if (employeeData.isHR) {
       return {
         level: -1, // Special level for HR (higher than VPAA)
@@ -81,6 +83,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         permissions: {
           viewAllRequests: true,
           approveRequests: true,
+          hrFinalApproval: true,      // HR can give final approval
           manageLeaveCredits: true,
           manageLeavePolicies: true,
           viewReports: true,
@@ -127,6 +130,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         permissions: {
           viewAllRequests: true,
           approveRequests: true,
+          hrFinalApproval: true,
           manageLeaveCredits: true,
           manageLeavePolicies: true,
           viewReports: true,
@@ -140,7 +144,8 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         approvalScope: 'all',
         permissions: {
           viewAllRequests: true,
-          approveRequests: true,
+          approveRequests: true,        // Can pre-approve
+          hrFinalApproval: false,       // VPAA does not give final HR approval
           manageLeaveCredits: true,
           manageLeavePolicies: true,
           viewReports: true,
@@ -153,7 +158,8 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         approvalScope: 'department',
         permissions: {
           viewAllRequests: true,
-          approveRequests: true,
+          approveRequests: true,        // Can pre-approve
+          hrFinalApproval: false,       // Cannot give final approval
           manageLeaveCredits: true,
           manageLeavePolicies: false,
           viewReports: true,
@@ -167,7 +173,8 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         approvalScope: 'program',
         permissions: {
           viewAllRequests: false,
-          approveRequests: true,
+          approveRequests: true,        // Can pre-approve
+          hrFinalApproval: false,       // Cannot give final approval
           manageLeaveCredits: false,
           manageLeavePolicies: false,
           viewReports: true,
@@ -182,6 +189,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         permissions: {
           viewAllRequests: false,
           approveRequests: false,
+          hrFinalApproval: false,
           manageLeaveCredits: false,
           manageLeavePolicies: false,
           viewReports: false,
@@ -196,6 +204,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         permissions: {
           viewAllRequests: false,
           approveRequests: false,
+          hrFinalApproval: false,
           manageLeaveCredits: false,
           manageLeavePolicies: false,
           viewReports: false,
@@ -210,6 +219,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         permissions: {
           viewAllRequests: false,
           approveRequests: false,
+          hrFinalApproval: false,
           manageLeaveCredits: false,
           manageLeavePolicies: false,
           viewReports: false,

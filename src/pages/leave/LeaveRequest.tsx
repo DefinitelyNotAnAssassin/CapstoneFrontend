@@ -3,10 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
   IonCard,
   IonCardHeader,
   IonCardTitle,
@@ -30,7 +26,6 @@ import {
   IonSegmentButton,
   IonModal,
   IonButtons,
-  IonMenuButton,
   IonSpinner,
   IonText,
   IonChip,
@@ -38,6 +33,9 @@ import {
   IonToast,
   IonRefresher,
   IonRefresherContent,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
 } from '@ionic/react';
 import {
   addOutline,
@@ -49,6 +47,7 @@ import {
 } from 'ionicons/icons';
 import { useRole } from '../../contexts/RoleContext';
 import leaveService, { LeaveRequest as LeaveRequestType, LeaveCredit } from '../../services/LeaveService';
+import { MainLayout } from '@components/layout';
 
 const LeaveRequest: React.FC = () => {
   const { employee, loading: roleLoading } = useRole();
@@ -209,31 +208,24 @@ const LeaveRequest: React.FC = () => {
 
   if (loading || roleLoading) {
     return (
-      <IonPage>
-        <IonContent className="ion-padding ion-text-center">
-          <div style={{ marginTop: '50%' }}>
-            <IonSpinner name="crescent" color="primary" />
-            <IonText>
-              <p>Loading leave data...</p>
-            </IonText>
-          </div>
-        </IonContent>
-      </IonPage>
+      <MainLayout title="Leave Management" isLoading={true}>
+        <div className="ion-padding ion-text-center" style={{ marginTop: '50%' }}>
+          <IonSpinner name="crescent" color="primary" />
+          <IonText>
+            <p>Loading leave data...</p>
+          </IonText>
+        </div>
+      </MainLayout>
     );
   }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>Leave Management</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      
-      <IonContent>
+    <MainLayout 
+      title="Leave Management" 
+      showRefresh={true}
+      onRefresh={() => loadData()}
+      isLoading={loading}
+    >
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent />
         </IonRefresher>
@@ -307,7 +299,7 @@ const LeaveRequest: React.FC = () => {
                             </IonText>
                           </IonCol>
                           <IonCol size="auto">
-                            <IonBadge color={getStatusColor(request.status)}>
+                            <IonBadge color={getStatusColor(request.status)} className='p-2 rounded rounded-lg'>
                               {request.status}
                             </IonBadge>
                           </IonCol>
@@ -596,8 +588,7 @@ const LeaveRequest: React.FC = () => {
           duration={3000}
           color={toastColor}
         />
-      </IonContent>
-    </IonPage>
+    </MainLayout>
   );
 };
 

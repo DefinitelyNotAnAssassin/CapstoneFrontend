@@ -198,7 +198,7 @@ export class DataTransformationHelper {
     
     for (const endpoint of endpoints) {
       try {
-        const response = await fetch(`https://dharklike.pythonanywhere.com${endpoint}`);
+        const response = await fetch(`http://127.0.0.1:8000${endpoint}`);
         results[endpoint] = response.ok;
       } catch (error) {
         results[endpoint] = false;

@@ -5,11 +5,9 @@ import { useState, useRef } from "react"
 import {
   IonContent,
   IonHeader,
-  IonPage,
-  IonTitle,
   IonToolbar,
+  IonTitle,
   IonButtons,
-  IonMenuButton,
   IonButton,
   IonIcon,
   IonSelect,
@@ -45,6 +43,7 @@ import {
 import { useAudit } from "../../hooks/useAudit"
 import type { AuditLog, AuditModule, AuditAction } from "../../data/audit-data"
 import "./AuditTrail.css"
+import { MainLayout } from "@components/layout"
 
 const AuditTrail: React.FC = () => {
   const { logs, loading, error, filters, updateFilters, clearFilters, exportToCSV, refetch } = useAudit()
@@ -125,40 +124,38 @@ const AuditTrail: React.FC = () => {
   }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>Audit Trail</IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={() => setShowFilters(true)}>
-              <IonIcon slot="icon-only" icon={filterOutline} />
-            </IonButton>
-            <IonButton onClick={handleExport}>
-              <IonIcon slot="icon-only" icon={downloadOutline} />
-            </IonButton>
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
+    <MainLayout title="Audit Trail">
+        {/* Action buttons as a card */}
+        <IonCard>
+          <IonCardContent>
+            <IonGrid>
+              <IonRow className="ion-align-items-center ion-justify-content-between">
+                <IonCol size="auto">
+                  <IonText><h2 style={{ margin: 0 }}>System Audit Logs</h2></IonText>
+                </IonCol>
+                <IonCol size="auto">
+                  <IonButton fill="clear" onClick={() => setShowFilters(true)}>
+                    <IonIcon slot="icon-only" icon={filterOutline} />
+                  </IonButton>
+                  <IonButton fill="clear" onClick={handleExport}>
+                    <IonIcon slot="icon-only" icon={downloadOutline} />
+                  </IonButton>
+                  {Object.keys(filters).length > 0 && (
+                    <IonButton size="small" fill="clear" onClick={clearFilters}>
+                      Clear Filters
+                      <IonIcon slot="end" icon={closeCircleOutline} />
+                    </IonButton>
+                  )}
+                </IonCol>
+              </IonRow>
+            </IonGrid>
+          </IonCardContent>
+        </IonCard>
 
-      <IonContent className="audit-trail-container">
+      <div className="audit-trail-container">
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent></IonRefresherContent>
         </IonRefresher>
-
-        <div className="audit-trail-header">
-          <h1 className="audit-trail-title">System Audit Logs</h1>
-          <div>
-            {Object.keys(filters).length > 0 && (
-              <IonButton size="small" fill="clear" onClick={clearFilters}>
-                Clear Filters
-                <IonIcon slot="end" icon={closeCircleOutline} />
-              </IonButton>
-            )}
-          </div>
-        </div>
 
         {error && (
           <div className="audit-error">
@@ -510,8 +507,8 @@ const AuditTrail: React.FC = () => {
           duration={2000}
           position="bottom"
         />
-      </IonContent>
-    </IonPage>
+      </div>
+    </MainLayout>
   )
 }
 

@@ -4,10 +4,6 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import {
   IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
   IonList,
   IonItem,
   IonLabel,
@@ -26,13 +22,16 @@ import {
   IonFabButton,
   IonModal,
   IonButtons,
-  IonMenuButton,
   IonFooter,
   IonSpinner,
   IonText,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
 } from "@ionic/react"
 import { add, create, trash, save, close } from "ionicons/icons"
 import leaveService, { type LeavePolicy } from "../../services/LeaveService"
+import { MainLayout } from "@components/layout"
 
 const LeavePolicyManagement: React.FC = () => {
   const [policies, setPolicies] = useState<LeavePolicy[]>([])
@@ -178,15 +177,7 @@ const LeavePolicyManagement: React.FC = () => {
   }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>Leave Policy Management</IonTitle>
-        </IonToolbar>
-      </IonHeader>      <IonContent>
+    <MainLayout title="Leave Policy Management">
         {loading ? (
           <div style={{ textAlign: 'center', padding: '50px' }}>
             <IonSpinner name="crescent" />
@@ -215,7 +206,7 @@ const LeavePolicyManagement: React.FC = () => {
                     </p>
                     <div>
                       {(policy.applicable_positions || []).map((position: string) => (
-                        <IonBadge key={position} color="secondary" className="ion-margin-end ion-margin-top">
+                        <IonBadge key={position} color="secondary" className="ion-margin-end ion-margin-top p-2">
                           {position}
                         </IonBadge>
                       ))}
@@ -367,8 +358,7 @@ const LeavePolicyManagement: React.FC = () => {
             },
           ]}
         />
-      </IonContent>
-    </IonPage>
+    </MainLayout>
   )
 }
 

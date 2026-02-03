@@ -5,11 +5,7 @@ import { useState, useEffect } from "react"
 import {
   IonContent,
   IonHeader,
-  IonPage,
-  IonTitle,
   IonToolbar,
-  IonButtons,
-  IonMenuButton,
   IonSegment,
   IonSegmentButton,
   IonLabel,
@@ -33,6 +29,8 @@ import {
   IonItemSliding,
   IonItemOptions,
   IonItemOption,
+  IonTitle,
+  IonButtons,
 } from "@ionic/react"
 import { add, create, trash, business, school, briefcase } from "ionicons/icons"
 import {
@@ -45,6 +43,7 @@ import {
   type Program,
   type Office,
 } from "../../data/data"
+import { MainLayout } from "@components/layout"
 
 const OrganizationManagement: React.FC = () => {
   const [segment, setSegment] = useState<"departments" | "programs" | "offices">("departments")
@@ -286,33 +285,27 @@ const OrganizationManagement: React.FC = () => {
   }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>Organization Management</IonTitle>
-        </IonToolbar>
-        <IonToolbar>
-          <IonSegment value={segment} onIonChange={(e) => setSegment(e.detail.value as any)}>
-            <IonSegmentButton value="departments">
-              <IonIcon icon={business} />
-              <IonLabel>Departments</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="programs">
-              <IonIcon icon={school} />
-              <IonLabel>Programs</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="offices">
-              <IonIcon icon={briefcase} />
-              <IonLabel>Offices</IonLabel>
-            </IonSegmentButton>
-          </IonSegment>
-        </IonToolbar>
-      </IonHeader>
+    <MainLayout title="Organization Management">
+        {/* Segment Toolbar */}
+        <IonCard>
+          <IonCardContent>
+            <IonSegment value={segment} onIonChange={(e) => setSegment(e.detail.value as any)}>
+              <IonSegmentButton value="departments">
+                <IonIcon icon={business} />
+                <IonLabel>Departments</IonLabel>
+              </IonSegmentButton>
+              <IonSegmentButton value="programs">
+                <IonIcon icon={school} />
+                <IonLabel>Programs</IonLabel>
+              </IonSegmentButton>
+              <IonSegmentButton value="offices">
+                <IonIcon icon={briefcase} />
+                <IonLabel>Offices</IonLabel>
+              </IonSegmentButton>
+            </IonSegment>
+          </IonCardContent>
+        </IonCard>
 
-      <IonContent>
         {segment === "departments" && (
           <IonCard>
             <IonCardHeader>
@@ -659,7 +652,6 @@ const OrganizationManagement: React.FC = () => {
             <IonIcon icon={add} />
           </IonFabButton>
         </IonFab>
-      </IonContent>
 
       <IonToast
         isOpen={showToast}
@@ -668,7 +660,7 @@ const OrganizationManagement: React.FC = () => {
         duration={2000}
         color={toastColor}
       />
-    </IonPage>
+    </MainLayout>
   )
 }
 

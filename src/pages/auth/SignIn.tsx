@@ -194,9 +194,9 @@ const SignIn: React.FC = () => {
               />
             </div>
 
-            <IonCard className="signin-card">
+            <IonCard className="signin-card py-8">
               <IonCardHeader>
-                <IonCardTitle className="ion-text-center">Sign In</IonCardTitle>
+                <IonCardTitle className="ion-text-center">HRIS Sign In</IonCardTitle>
               </IonCardHeader>
 
               <IonCardContent className="signin-card-content">
@@ -269,6 +269,7 @@ const SignIn: React.FC = () => {
                     Sign In
                   </IonButton>
                 </form>
+
 
              
               </IonCardContent>

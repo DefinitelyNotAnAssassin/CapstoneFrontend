@@ -1,9 +1,9 @@
 // Leave Management Service - API-based
-// Connects to Django REST API for role-based leave management
+// Connects to Django REST API for role-based leave management with two-step approval
 
 import AuthService from './AuthService';
 
-const API_BASE_URL = 'https://dharklike.pythonanywhere.com';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 interface LeaveRequest {
   id?: number;
@@ -13,7 +13,12 @@ interface LeaveRequest {
   end_date: string;
   days_requested: number;
   reason: string;
-  status: 'Pending' | 'Approved' | 'Rejected' | 'Cancelled';
+  status: 'Pending' | 'Supervisor_Approved' | 'Approved' | 'Rejected' | 'Cancelled';
+  // Supervisor approval fields (Step 1)
+  supervisor_approved_by?: any;
+  supervisor_approval_date?: string;
+  supervisor_approval_notes?: string;
+  // HR approval fields (Step 2)
   approved_by?: any;
   approval_date?: string;
   approval_notes?: string;
@@ -174,6 +179,7 @@ class LeaveService {
       position: string;
       role_level: number;
       approval_scope: string;
+      approval_type?: string;
     };
   }> {
     const url = this.addEmailToUrl(`${API_BASE_URL}/api/leave-requests/pending_for_approval/`);
@@ -184,6 +190,80 @@ class LeaveService {
     return this.handleResponse(response);
   }
 
+  // Get requests pending HR final approval (Step 2)
+  async getPendingForHRApproval(): Promise<{
+    requests: LeaveRequest[];
+    approver_info: {
+      name: string;
+      position: string;
+      department: string;
+      approval_type: string;
+    };
+  }> {
+    const url = this.addEmailToUrl(`${API_BASE_URL}/api/leave-requests/pending_for_hr_approval/`);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  // Get ALL pending requests for HR (including those not yet supervisor-approved) - for bypass
+  async getAllPendingForHR(): Promise<{
+    requests: LeaveRequest[];
+    approver_info: {
+      name: string;
+      position: string;
+      department: string;
+      approval_type: string;
+    };
+  }> {
+    const url = this.addEmailToUrl(`${API_BASE_URL}/api/leave-requests/all_pending_for_hr/`);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  // Supervisor pre-approval (Step 1)
+  async supervisorApproveLeaveRequest(id: number, approvalNotes: string = ''): Promise<{ message: string; request: LeaveRequest }> {
+    const body = { approval_notes: approvalNotes, employee_email: this.getCurrentUserEmail() };
+    const response = await fetch(`${API_BASE_URL}/api/leave-requests/${id}/supervisor_approve/`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(body)
+    });
+    return this.handleResponse(response);
+  }
+
+  // HR final approval (Step 2)
+  async hrApproveLeaveRequest(id: number, approvalNotes: string = ''): Promise<{ message: string; request: LeaveRequest }> {
+    const body = { approval_notes: approvalNotes, employee_email: this.getCurrentUserEmail() };
+    const response = await fetch(`${API_BASE_URL}/api/leave-requests/${id}/hr_approve/`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(body)
+    });
+    return this.handleResponse(response);
+  }
+
+  // HR direct approval - bypasses supervisor approval
+  async hrDirectApproveLeaveRequest(id: number, approvalNotes: string = '', bypassReason: string = ''): Promise<{ message: string; request: LeaveRequest; bypassed_supervisor: boolean }> {
+    const body = { 
+      approval_notes: approvalNotes, 
+      bypass_reason: bypassReason,
+      employee_email: this.getCurrentUserEmail() 
+    };
+    const response = await fetch(`${API_BASE_URL}/api/leave-requests/${id}/hr_direct_approve/`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(body)
+    });
+    return this.handleResponse(response);
+  }
+
+  // Legacy approve method - routes to appropriate approval step
   async approveLeaveRequest(id: number, approvalNotes: string = ''): Promise<{ message: string; request: LeaveRequest }> {
     const body = { approval_notes: approvalNotes, employee_email: this.getCurrentUserEmail() };
     const response = await fetch(`${API_BASE_URL}/api/leave-requests/${id}/approve_request/`, {
@@ -378,11 +458,24 @@ class LeaveService {
   getStatusColor(status: string): string {
     const colors: { [key: string]: string } = {
       'Pending': 'warning',
+      'Supervisor_Approved': 'tertiary',
       'Approved': 'success',
       'Rejected': 'danger',
       'Cancelled': 'medium'
     };
     return colors[status] || 'medium';
+  }
+
+  // Helper to get human-readable status text
+  getStatusDisplayText(status: string): string {
+    const statusText: { [key: string]: string } = {
+      'Pending': 'Pending Supervisor Approval',
+      'Supervisor_Approved': 'Awaiting HR Approval',
+      'Approved': 'Approved',
+      'Rejected': 'Rejected',
+      'Cancelled': 'Cancelled'
+    };
+    return statusText[status] || status;
   }
 }
 

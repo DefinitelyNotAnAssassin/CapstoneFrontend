@@ -5,11 +5,9 @@ import { useState, useEffect } from "react"
 import {
   IonContent,
   IonHeader,
-  IonPage,
   IonTitle,
   IonToolbar,
   IonButtons,
-  IonMenuButton,
   IonCard,
   IonCardHeader,
   IonCardTitle,
@@ -48,6 +46,7 @@ import {
 } from "ionicons/icons"
 import { leaveCreditService, Employee, LeaveCredit as APILeaveCredit } from "../../services/leaveCreditService"
 import { API_ENDPOINTS, getAuthHeaders } from "../../config/api"
+import { MainLayout } from "@components/layout"
 
 // Leave types from API
 export type LeaveType = 'Vacation Leave' | 'Sick Leave' | 'Birthday Leave' | 'Solo Parent Leave' | 'Bereavement Leave' | 'Paternity Leave' | 'Maternity Leave'
@@ -518,80 +517,72 @@ const LeaveCreditManagement: React.FC = () => {
   }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>Leave Credit Management</IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={refreshData}>
-              <IonIcon icon={refresh} />
-            </IonButton>
-          </IonButtons>
-        </IonToolbar>
-        
-        {/* Filter Toolbar */}
-        <IonToolbar>
-          <IonGrid>
-            <IonRow className="ion-align-items-center">
-              <IonCol size="12" sizeMd="3">
-                <IonSearchbar
-                  value={searchText}
-                  onIonInput={(e) => setSearchText(e.detail.value!)}
-                  placeholder="Search employees..."
-                  debounce={300}
-                />
-              </IonCol>
-              <IonCol size="6" sizeMd="2">
-                <IonSelect
-                  value={selectedYear}
-                  onIonChange={(e) => setSelectedYear(e.detail.value)}
-                  interface="popover"
-                  placeholder="Year"
-                >
-                  {years.map((year) => (
-                    <IonSelectOption key={year} value={year}>
-                      {year}
-                    </IonSelectOption>
-                  ))}
-                </IonSelect>
-              </IonCol>
-              <IonCol size="6" sizeMd="3">
-                <IonSelect
-                  value={selectedLeaveType}
-                  onIonChange={(e) => setSelectedLeaveType(e.detail.value)}
-                  interface="popover"
-                  placeholder="Leave Type"
-                >
-                  <IonSelectOption value="all">All Leave Types</IonSelectOption>
-                  <IonSelectOption value="Vacation Leave">Vacation Leave</IonSelectOption>
-                  <IonSelectOption value="Sick Leave">Sick Leave</IonSelectOption>
-                  <IonSelectOption value="Birthday Leave">Birthday Leave</IonSelectOption>
-                  <IonSelectOption value="Solo Parent Leave">Solo Parent Leave</IonSelectOption>
-                  <IonSelectOption value="Bereavement Leave">Bereavement Leave</IonSelectOption>
-                  <IonSelectOption value="Paternity Leave">Paternity Leave</IonSelectOption>
-                  <IonSelectOption value="Maternity Leave">Maternity Leave</IonSelectOption>
-                </IonSelect>
-              </IonCol>
-              <IonCol size="6" sizeMd="2">
-                <IonButton expand="block" fill="clear" onClick={resetFilters}>
-                  Reset
-                </IonButton>
-              </IonCol>
-              <IonCol size="6" sizeMd="2">
-                <IonButton expand="block" color="success" onClick={handleAddCredit}>
-                  <IonIcon icon={add} slot="start" />
-                  Add
-                </IonButton>
-              </IonCol>
-            </IonRow>
-          </IonGrid>
-        </IonToolbar>
-      </IonHeader>
+    <MainLayout 
+      title="Leave Credit Management"
+      showRefresh={true}
+      onRefresh={() => refreshData()}
+      isLoading={loading}
+    >
+        {/* Filter Card */}
+        <IonCard>
+          <IonCardContent>
+            <IonGrid>
+              <IonRow className="ion-align-items-center">
+                <IonCol size="12" sizeMd="3">
+                  <IonSearchbar
+                    value={searchText}
+                    onIonInput={(e) => setSearchText(e.detail.value!)}
+                    placeholder="Search employees..."
+                    debounce={300}
+                  />
+                </IonCol>
+                <IonCol size="6" sizeMd="2">
+                  <IonSelect
+                    value={selectedYear}
+                    onIonChange={(e) => setSelectedYear(e.detail.value)}
+                    interface="popover"
+                    placeholder="Year"
+                  >
+                    {years.map((year) => (
+                      <IonSelectOption key={year} value={year}>
+                        {year}
+                      </IonSelectOption>
+                    ))}
+                  </IonSelect>
+                </IonCol>
+                <IonCol size="6" sizeMd="3">
+                  <IonSelect
+                    value={selectedLeaveType}
+                    onIonChange={(e) => setSelectedLeaveType(e.detail.value)}
+                    interface="popover"
+                    placeholder="Leave Type"
+                  >
+                    <IonSelectOption value="all">All Leave Types</IonSelectOption>
+                    <IonSelectOption value="Vacation Leave">Vacation Leave</IonSelectOption>
+                    <IonSelectOption value="Sick Leave">Sick Leave</IonSelectOption>
+                    <IonSelectOption value="Birthday Leave">Birthday Leave</IonSelectOption>
+                    <IonSelectOption value="Solo Parent Leave">Solo Parent Leave</IonSelectOption>
+                    <IonSelectOption value="Bereavement Leave">Bereavement Leave</IonSelectOption>
+                    <IonSelectOption value="Paternity Leave">Paternity Leave</IonSelectOption>
+                    <IonSelectOption value="Maternity Leave">Maternity Leave</IonSelectOption>
+                  </IonSelect>
+                </IonCol>
+                <IonCol size="6" sizeMd="2">
+                  <IonButton expand="block" fill="clear" onClick={resetFilters}>
+                    Reset
+                  </IonButton>
+                </IonCol>
+                <IonCol size="6" sizeMd="2">
+                  <IonButton expand="block" color="success" onClick={handleAddCredit}>
+                    <IonIcon icon={add} slot="start" />
+                    Add
+                  </IonButton>
+                </IonCol>
+              </IonRow>
+            </IonGrid>
+          </IonCardContent>
+        </IonCard>
 
-      <IonContent className="ion-padding">
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent />
         </IonRefresher>
@@ -1385,8 +1376,7 @@ const LeaveCreditManagement: React.FC = () => {
           message={alertMessage}
           buttons={["OK"]}
         />
-      </IonContent>
-    </IonPage>
+    </MainLayout>
   )
 }
 

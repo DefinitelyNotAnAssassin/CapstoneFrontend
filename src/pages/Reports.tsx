@@ -3,13 +3,6 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import {
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
-  IonMenuButton,
   IonGrid,
   IonRow,
   IonCol,
@@ -35,6 +28,7 @@ import ReportExport from "../components/reports/ReportExport"
 
 // Import utilities
 import { generatePDF } from "../utils/PDFGenerator"
+import { MainLayout } from "@components/layout"
 
 // Register Chart.js components
 Chart.register(...registerables)
@@ -198,17 +192,7 @@ const Reports: React.FC = () => {
   }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>Reports</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-
-      <IonContent>
+    <MainLayout title="Reports">
         <IonGrid>
           <IonRow>
             <IonCol size="12">
@@ -291,8 +275,7 @@ const Reports: React.FC = () => {
         />
 
         <IonLoading isOpen={isGeneratingPDF} message={"Generating PDF..."} duration={10000} />
-      </IonContent>
-    </IonPage>
+    </MainLayout>
   )
 }
 

@@ -30,11 +30,25 @@ ChartJS.register(
   Filler
 )
 
+// Interface matching actual API response
 interface LeaveCredit {
-  leave_type_name: string
-  total_credits: number
-  used_credits: number
-  remaining_credits: number
+  id?: number
+  employee_name?: string
+  leave_type: string  // API returns "leave_type", not "leave_type_name"
+  leave_type_name?: string  // Optional for backwards compatibility
+  total_credits: string | number
+  used_credits: string | number
+  remaining_credits: string | number
+  year?: number
+  employee?: number
+  created_at?: string
+  updated_at?: string
+}
+
+// Helper function to safely parse numeric values from API (handles strings like "25.00")
+const parseCredits = (value: string | number): number => {
+  if (typeof value === 'number') return value
+  return parseFloat(value) || 0
 }
 
 interface LeaveChartsProps {
@@ -134,11 +148,11 @@ export const LeaveTypeBreakdownChart: React.FC<{
   ]
 
   const data = {
-    labels: leaveCreditsBreakdown.map((credit) => credit.leave_type_name),
+    labels: leaveCreditsBreakdown.map((credit) => credit.leave_type_name || credit.leave_type),
     datasets: [
       {
         label: "Used",
-        data: leaveCreditsBreakdown.map((credit) => credit.used_credits),
+        data: leaveCreditsBreakdown.map((credit) => parseCredits(credit.used_credits)),
         backgroundColor: "rgba(239, 68, 68, 0.8)",
         borderColor: "rgb(239, 68, 68)",
         borderWidth: 1,
@@ -146,7 +160,7 @@ export const LeaveTypeBreakdownChart: React.FC<{
       },
       {
         label: "Remaining",
-        data: leaveCreditsBreakdown.map((credit) => credit.remaining_credits),
+        data: leaveCreditsBreakdown.map((credit) => parseCredits(credit.remaining_credits)),
         backgroundColor: "rgba(16, 185, 129, 0.8)",
         borderColor: "rgb(16, 185, 129)",
         borderWidth: 1,
