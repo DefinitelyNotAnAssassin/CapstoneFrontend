@@ -636,7 +636,7 @@ const LeaveApproval: React.FC = () => {
         {activeSegment === 'hr_bypass' && isHR && (
           <>
             {/* HR Bypass Info Card */}
-            <IonCard className="ion-margin" color="warning">
+            <IonCard className="ion-margin p-5" color="">
               <IonCardHeader>
                 <IonCardTitle>Direct Approval (Bypass Supervisor)</IonCardTitle>
               </IonCardHeader>
@@ -649,7 +649,7 @@ const LeaveApproval: React.FC = () => {
             </IonCard>
 
             {/* Summary Card */}
-            <IonCard className="ion-margin">
+            <IonCard className="ion-margin p-5">
               <IonCardHeader>
                 <IonCardTitle>Pending Supervisor Approval</IonCardTitle>
               </IonCardHeader>
@@ -706,7 +706,7 @@ const LeaveApproval: React.FC = () => {
                                 </IonText>
                               </IonCol>
                               <IonCol size="auto">
-                                <IonChip color={getLeaveTypeColor(request.leave_type)}>
+                                <IonChip className='p-2 px-3' color={getLeaveTypeColor(request.leave_type)}>
                                   {request.leave_type}
                                 </IonChip>
                               </IonCol>
@@ -719,8 +719,8 @@ const LeaveApproval: React.FC = () => {
                                   <strong>{request.days_requested} day(s)</strong>
                                 </IonNote>
                               </IonCol>
-                              <IonCol size="auto">
-                                <IonBadge color="warning">Pending Supervisor</IonBadge>
+                              <IonCol size="auto" className='mt-2'>
+                                <IonBadge className='p-2 px-3' color="warning">Pending Supervisor</IonBadge>
                               </IonCol>
                             </IonRow>
                             <IonRow className="ion-margin-top">
@@ -734,7 +734,7 @@ const LeaveApproval: React.FC = () => {
                                   Details
                                 </IonButton>
                               </IonCol>
-                              <IonCol size="auto">
+                              <IonCol size="auto" className='flex gap-2'>
                                 <IonButton 
                                   color="danger" 
                                   fill="outline"
