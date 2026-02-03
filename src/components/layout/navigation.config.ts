@@ -9,6 +9,8 @@ import {
   homeOutline,
   settingsOutline,
   personOutline,
+  keyOutline,
+  lockClosedOutline,
 } from "ionicons/icons"
 
 export interface NavItem {
@@ -120,6 +122,27 @@ export const navigationConfig: NavSection[] = [
         icon: shieldOutline,
         path: "/audit-trail",
         permission: "viewReports",
+      },
+    ],
+  },
+  {
+    title: "Settings",
+    items: [
+      {
+        id: "roles-management",
+        title: "Roles & Permissions",
+        icon: keyOutline,
+        path: "/roles-management",
+        permission: "rbac_manage_roles",
+        hrOnly: true,
+      },
+      {
+        id: "user-permissions",
+        title: "User Permissions",
+        icon: lockClosedOutline,
+        path: "/user-permissions",
+        permission: "rbac_assign_roles",
+        hrOnly: true,
       },
     ],
   },

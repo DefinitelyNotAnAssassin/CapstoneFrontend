@@ -1,0 +1,289 @@
+@import "tailwindcss";
+
+/* Custom theme tokens for Ionic integration */
+@theme {
+  /* Primary colors that match Ionic's theming */
+  --color-primary-50: #e3f2fd;
+  --color-primary-100: #bbdefb;
+  --color-primary-200: #90caf9;
+  --color-primary-300: #64b5f6;
+  --color-primary-400: #42a5f5;
+  --color-primary-500: #3880ff;
+  --color-primary-600: #3171e0;
+  --color-primary-700: #1a56db;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+
+  /* Success colors */
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-200: #a7f3d0;
+  --color-success-300: #6ee7b7;
+  --color-success-400: #34d399;
+  --color-success-500: #2dd36f;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
+  --color-success-800: #065f46;
+  --color-success-900: #064e3b;
+
+  /* Warning colors */
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #ffc409;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
+
+  /* Danger colors */
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #eb445a;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
+
+  /* Neutral/Medium colors */
+  --color-medium-50: #f8fafc;
+  --color-medium-100: #f1f5f9;
+  --color-medium-200: #e2e8f0;
+  --color-medium-300: #cbd5e1;
+  --color-medium-400: #94a3b8;
+  --color-medium-500: #92949c;
+  --color-medium-600: #475569;
+  --color-medium-700: #334155;
+  --color-medium-800: #1e293b;
+  --color-medium-900: #0f172a;
+}
+
+/* Utility classes for RBAC pages */
+.rbac-container {
+  @apply min-h-full bg-gradient-to-br from-slate-50 to-slate-100;
+}
+
+.rbac-card {
+  @apply bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden transition-all duration-200 hover:shadow-lg;
+}
+
+.rbac-card-header {
+  @apply px-6 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white;
+}
+
+.rbac-card-title {
+  @apply text-xl font-semibold flex items-center gap-3;
+}
+
+.rbac-card-content {
+  @apply p-6;
+}
+
+.role-list-item {
+  @apply flex items-center gap-4 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200
+         hover:bg-primary-50 border border-transparent;
+}
+
+.role-list-item.selected {
+  @apply bg-primary-100 border-primary-300 shadow-sm;
+}
+
+.role-list-item-icon {
+  @apply w-10 h-10 rounded-full flex items-center justify-center;
+}
+
+.role-list-item-icon.system {
+  @apply bg-warning-100 text-warning-600;
+}
+
+.role-list-item-icon.custom {
+  @apply bg-primary-100 text-primary-600;
+}
+
+.role-badge {
+  @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+}
+
+.role-badge.active {
+  @apply bg-success-100 text-success-700;
+}
+
+.role-badge.inactive {
+  @apply bg-medium-200 text-medium-600;
+}
+
+.role-badge.system {
+  @apply bg-warning-100 text-warning-700;
+}
+
+.permission-chip {
+  @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
+         bg-success-100 text-success-700 border border-success-200;
+}
+
+.permission-category {
+  @apply rounded-lg border border-slate-200 overflow-hidden mb-3;
+}
+
+.permission-category-header {
+  @apply flex items-center justify-between px-4 py-3 bg-slate-50 cursor-pointer
+         hover:bg-slate-100 transition-colors duration-150;
+}
+
+.permission-category-title {
+  @apply font-medium text-slate-700;
+}
+
+.permission-category-count {
+  @apply px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700;
+}
+
+.permission-category-content {
+  @apply p-4 bg-white;
+}
+
+.action-button {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
+         transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.action-button.primary {
+  @apply bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500;
+}
+
+.action-button.secondary {
+  @apply bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500;
+}
+
+.action-button.danger {
+  @apply bg-danger-500 text-white hover:bg-danger-600 focus:ring-danger-500;
+}
+
+.action-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.detail-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+}
+
+.detail-item {
+  @apply flex flex-col gap-1;
+}
+
+.detail-label {
+  @apply text-xs font-medium text-slate-500 uppercase tracking-wide;
+}
+
+.detail-value {
+  @apply text-base font-semibold text-slate-800;
+}
+
+.empty-state {
+  @apply flex flex-col items-center justify-center py-12 text-center;
+}
+
+.empty-state-icon {
+  @apply w-16 h-16 text-slate-300 mb-4;
+}
+
+.empty-state-title {
+  @apply text-lg font-semibold text-slate-600 mb-2;
+}
+
+.empty-state-description {
+  @apply text-sm text-slate-500 max-w-sm;
+}
+
+.search-input {
+  @apply w-full px-4 py-3 rounded-lg border border-slate-300 bg-white
+         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+         placeholder:text-slate-400 transition-all duration-200;
+}
+
+.form-group {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-slate-700 mb-1.5;
+}
+
+.form-input {
+  @apply w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-white
+         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+         transition-all duration-200;
+}
+
+.form-select {
+  @apply w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-white
+         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+         transition-all duration-200 cursor-pointer;
+}
+
+.form-textarea {
+  @apply w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-white
+         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+         transition-all duration-200 resize-none;
+}
+
+.toggle-switch {
+  @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200
+         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+}
+
+.toggle-switch.on {
+  @apply bg-primary-500;
+}
+
+.toggle-switch.off {
+  @apply bg-slate-300;
+}
+
+.modal-overlay {
+  @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+}
+
+.modal-content {
+  @apply bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden;
+}
+
+.modal-header {
+  @apply flex items-center justify-between px-6 py-4 border-b border-slate-200;
+}
+
+.modal-title {
+  @apply text-lg font-semibold text-slate-800;
+}
+
+.modal-body {
+  @apply p-6 overflow-y-auto max-h-[60vh];
+}
+
+.modal-footer {
+  @apply flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50;
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}

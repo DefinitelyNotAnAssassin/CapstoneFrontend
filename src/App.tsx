@@ -27,6 +27,10 @@ import FirebaseSetup from "./pages/FirebaseSetup"
 import AuthGuard from "./components/AuthGuard"
 import { RoleProvider } from "./contexts/RoleContext"
 
+// RBAC Management Pages
+import RolesManagement from "./pages/rbac/RolesManagement"
+import UserPermissions from "./pages/rbac/UserPermissions"
+
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css"
 
@@ -123,6 +127,20 @@ const App: React.FC = () => (
                 path="/audit-trail" 
                 component={AuditTrail} 
                 requirePermission="viewReports"
+                exact={true} 
+              />
+              
+              {/* RBAC Management routes - HR only */}
+              <AuthGuard 
+                path="/roles-management" 
+                component={RolesManagement} 
+                requirePermission="rbac_manage_roles"
+                exact={true} 
+              />
+              <AuthGuard 
+                path="/user-permissions" 
+                component={UserPermissions} 
+                requirePermission="rbac_assign_roles"
                 exact={true} 
               />
               

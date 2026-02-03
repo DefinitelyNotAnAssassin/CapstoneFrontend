@@ -1,0 +1,99 @@
+/* Roles Management Page - Tailwind Integration Styles */
+
+/* Ionic component overrides for better Tailwind integration */
+ion-content {
+  --background: transparent;
+}
+
+ion-input,
+ion-textarea,
+ion-select {
+  --background: #fff;
+  --border-radius: 0.75rem;
+  --padding-start: 1rem;
+  --padding-end: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+ion-input:focus-within,
+ion-textarea:focus-within,
+ion-select:focus-within {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+ion-toggle {
+  --track-background: #cbd5e1;
+  --track-background-checked: #6366f1;
+  --handle-background: #fff;
+  --handle-background-checked: #fff;
+}
+
+ion-checkbox {
+  --border-color: #cbd5e1;
+  --border-color-checked: #6366f1;
+  --background-checked: #6366f1;
+  --checkmark-color: #fff;
+  --border-radius: 0.375rem;
+}
+
+/* Modal styles */
+ion-modal {
+  --border-radius: 1rem;
+}
+
+ion-modal ion-toolbar {
+  --background: linear-gradient(to right, #4f46e5, #7c3aed);
+  --color: #fff;
+}
+
+ion-modal ion-title {
+  color: #fff;
+}
+
+ion-modal ion-button {
+  --color: #fff;
+}
+
+/* Scrollbar styling */
+.max-h-\[500px\]::-webkit-scrollbar {
+  width: 6px;
+}
+
+.max-h-\[500px\]::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.max-h-\[500px\]::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.max-h-\[500px\]::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Animation for selected role */
+@keyframes selectPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0);
+  }
+}
+
+.border-l-4.border-indigo-500 {
+  animation: selectPulse 2s ease-in-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .lg\:col-span-4,
+  .lg\:col-span-8 {
+    grid-column: span 12 / span 12;
+  }
+}
+
