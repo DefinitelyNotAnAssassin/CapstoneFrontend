@@ -6,7 +6,7 @@
  * can be customized by HR without code changes.
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 import AuthService from '../services/AuthService';
 import rbacService, { EmployeePermissions, RoleList } from '../services/RBACService';
 
@@ -141,6 +141,11 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   const [highestLevel, setHighestLevel] = useState<number>(99);
   const [isHR, setIsHR] = useState(false);
 
+  // Refs to prevent redundant refreshes
+  const isRefreshing = useRef(false);
+  const hasInitialized = useRef(false);
+  const lastEmployeeId = useRef<number | null>(null);
+
   // ==========================================================================
   // Permission Checking Methods
   // ==========================================================================
@@ -174,7 +179,20 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   // Refresh Permissions from Backend
   // ==========================================================================
 
-  const refreshPermissions = useCallback(async () => {
+  const refreshPermissions = useCallback(async (force: boolean = false) => {
+    // Prevent concurrent refreshes
+    if (isRefreshing.current) {
+      console.log('RoleContext: Already refreshing, skipping...');
+      return;
+    }
+    
+    // Skip if already initialized and not forced
+    if (hasInitialized.current && !force) {
+      console.log('RoleContext: Already initialized, skipping refresh');
+      return;
+    }
+
+    isRefreshing.current = true;
     setLoading(true);
     setError(null);
     
@@ -241,6 +259,8 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
       resetState();
     } finally {
       setLoading(false);
+      isRefreshing.current = false;
+      hasInitialized.current = true;
     }
   }, []);
 
@@ -477,13 +497,29 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
     refreshPermissions();
   }, []);
 
-  // Listen for auth changes
+  // Listen for auth changes - only from OTHER windows/tabs
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      console.log('RoleContext: Storage changed:', e.key);
-      if (e.key === 'authUser' || e.key === 'employeeData' || e.key === 'authToken') {
-        console.log('RoleContext: Auth-related storage changed, refreshing permissions...');
-        refreshPermissions();
+      // Storage events only fire for changes from OTHER windows/tabs
+      // This prevents unnecessary refreshes from same-page navigation
+      if (e.key === 'authUser' || e.key === 'authToken') {
+        console.log('RoleContext: Auth storage changed from another tab, refreshing...');
+        hasInitialized.current = false; // Allow refresh since auth changed
+        refreshPermissions(true);
+      } else if (e.key === 'employeeData') {
+        // Only refresh if the employee ID changed
+        try {
+          const newData = e.newValue ? JSON.parse(e.newValue) : null;
+          const newId = newData?.id ? Number(newData.id) : null;
+          if (newId !== lastEmployeeId.current) {
+            console.log('RoleContext: Employee ID changed from another tab, refreshing...');
+            lastEmployeeId.current = newId;
+            hasInitialized.current = false;
+            refreshPermissions(true);
+          }
+        } catch (err) {
+          console.error('Error parsing employeeData from storage event:', err);
+        }
       }
     };
 

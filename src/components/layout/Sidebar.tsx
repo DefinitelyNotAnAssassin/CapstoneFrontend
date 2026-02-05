@@ -42,10 +42,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   userAvatar,
 }) => {
   const location = useLocation()
-  const { userRole: roleData, hasPermission, employee } = useRole()
+  // Use new RBAC properties
+  const { 
+    primaryRole, 
+    hasPermission, 
+    employee, 
+    isHR: isHRFromContext, 
+    canApprove: canApproveFromContext,
+    highestLevel 
+  } = useRole()
 
-  const isHRUser = employee?.isHR || roleData?.level === -1 || roleData?.title === "HR Administrator"
-  const canApprove = roleData?.canApprove || false
+  // Determine HR status using new RBAC properties
+  const isHRUser = isHRFromContext || employee?.isHR || highestLevel === -1 || primaryRole?.code === "HR_ADMIN"
+  const canApprove = canApproveFromContext
 
   // Check if a permission exists
   const checkPermission = (permission: string): boolean => {
@@ -80,7 +89,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const visibleSections = getVisibleSections()
 
   return (
-    <IonMenu contentId={contentId} type="overlay" className="sidebar-menu shadow " swipeGesture={true}>
+    <IonMenu 
+      menuId="main-menu" 
+      contentId={contentId} 
+      type="overlay" 
+      className="sidebar-menu shadow" 
+      swipeGesture={true}
+    >
       <IonHeader className="sidebar-header">
         <IonToolbar color="white" className="mt-4 p-2">
         <img src="sdca-logo.png" alt="SDCA Logo"  />

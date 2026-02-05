@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   IonContent,
   IonHeader,
@@ -105,18 +105,28 @@ const LeaveCreditManagement: React.FC = () => {
   // Expanded rows state
   const [expandedEmployeeIds, setExpandedEmployeeIds] = useState<Set<string>>(new Set())
 
+  // Track if component is mounted to prevent state updates after unmount
+  const isMounted = useRef(true)
+
   // Load initial data on component mount
   useEffect(() => {
+    isMounted.current = true
     loadInitialData()
+    
+    return () => {
+      isMounted.current = false
+    }
   }, [])
 
   // Load all required data from API
   const loadInitialData = async () => {
+    if (!isMounted.current) return
     setLoading(true)
     setError(null)
     
     try {
       const employeesData = await leaveCreditService.fetchEmployees()
+      if (!isMounted.current) return
       setEmployees(employeesData)
 
       // Fetch leave credits for each employee using by_employee endpoint
@@ -124,6 +134,8 @@ const LeaveCreditManagement: React.FC = () => {
         fetchLeaveCreditsByEmployee(emp.id, selectedYear)
       )
       const creditsResults = await Promise.all(creditsPromises)
+      
+      if (!isMounted.current) return
       
       // Flatten and convert to local format
       const allCredits: LocalLeaveCredit[] = creditsResults.flat().map((credit: any) => ({
@@ -144,9 +156,11 @@ const LeaveCreditManagement: React.FC = () => {
 
     } catch (error) {
       console.error('Error loading data:', error)
-      setError(error instanceof Error ? error.message : 'Failed to load data')
+      if (isMounted.current) {
+        setError(error instanceof Error ? error.message : 'Failed to load data')
+      }
     } finally {
-      setLoading(false)
+      if (isMounted.current) setLoading(false)
     }
   }
 

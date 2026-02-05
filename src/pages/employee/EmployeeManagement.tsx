@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   IonContent,
   IonSearchbar,
@@ -51,7 +51,7 @@ import type { EmployeeInformation } from "../../data/data"
 import { MainLayout } from "@components/layout"
 
 const EmployeeManagement: React.FC = () => {
-  const { userRole, employee: currentEmployee, hasPermission } = useRole()
+  const { primaryRole, highestLevel, canApprove, employee: currentEmployee, hasPermission } = useRole()
   const [searchText, setSearchText] = useState("")
   const [managedEmployees, setManagedEmployees] = useState<EmployeeInformation[]>([])
   const [filteredEmployees, setFilteredEmployees] = useState<EmployeeInformation[]>([])
@@ -63,15 +63,29 @@ const EmployeeManagement: React.FC = () => {
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState("")
 
+  // Track if component is mounted to prevent state updates after unmount
+  const isMounted = useRef(true)
+  const hasInitialized = useRef(false)
+
   // Load managed employees on component mount
   useEffect(() => {
-    if (currentEmployee?.id && userRole && (userRole.level <= 2)) {
+    isMounted.current = true
+    
+    // Only initialize once when we have the required data
+    if (!hasInitialized.current && currentEmployee?.id && highestLevel !== undefined && highestLevel <= 2) {
+      hasInitialized.current = true
       loadManagedEmployees()
       loadManagementScope()
-    } else {
+    } else if (!hasInitialized.current && highestLevel !== undefined && highestLevel > 2) {
+      hasInitialized.current = true
       setIsLoading(false)
     }
-  }, [currentEmployee, userRole])
+    
+    return () => {
+      isMounted.current = false
+      hasInitialized.current = false
+    }
+  }, [currentEmployee, highestLevel])
 
   // Filter employees when search text or segment changes
   useEffect(() => {
@@ -79,6 +93,7 @@ const EmployeeManagement: React.FC = () => {
   }, [searchText, managedEmployees, selectedSegment])
 
   const loadManagedEmployees = async () => {
+    if (!isMounted.current) return
     try {
       setIsLoading(true)
       if (!currentEmployee?.id) {
@@ -87,24 +102,29 @@ const EmployeeManagement: React.FC = () => {
       }
 
       const employees = await employeeService.getManagedEmployees(currentEmployee.id)
+      if (!isMounted.current) return
+      
       setManagedEmployees(employees)
       setToastMessage(`Loaded ${employees.length} managed employees`)
       setShowToast(true)
     } catch (error) {
       console.error("Error loading managed employees:", error)
-      setAlertMessage("Failed to load managed employees. Please try again.")
-      setShowAlert(true)
+      if (isMounted.current) {
+        setAlertMessage("Failed to load managed employees. Please try again.")
+        setShowAlert(true)
+      }
     } finally {
-      setIsLoading(false)
+      if (isMounted.current) setIsLoading(false)
     }
   }
 
   const loadManagementScope = async () => {
+    if (!isMounted.current) return
     try {
       if (!currentEmployee?.id) return
       
       const scope = await employeeService.getManagementScope(currentEmployee.id)
-      setManagementScope(scope)
+      if (isMounted.current) setManagementScope(scope)
     } catch (error) {
       console.error("Error loading management scope:", error)
     }
@@ -195,7 +215,7 @@ const EmployeeManagement: React.FC = () => {
   }
 
   // Check if user can manage employees
-  const canManage = userRole && userRole.level <= 2
+  const canManage = highestLevel !== undefined && highestLevel <= 2
 
   if (!canManage) {
     return (
@@ -233,7 +253,7 @@ const EmployeeManagement: React.FC = () => {
             <IonCardTitle>
               <IonIcon icon={shieldOutline} style={{ marginRight: '8px' }} />
               Management Scope
-              <IonBadge color={userRole?.level === 0 ? 'success' : userRole?.level === 1 ? 'warning' : 'primary'} style={{ marginLeft: '8px' }}>
+              <IonBadge color={highestLevel === 0 ? 'success' : highestLevel === 1 ? 'warning' : 'primary'} style={{ marginLeft: '8px' }}>
                 {managementScope?.role_title || 'Loading...'}
               </IonBadge>
             </IonCardTitle>
@@ -241,7 +261,7 @@ const EmployeeManagement: React.FC = () => {
           <IonCardContent>
             <p>{getManagementDescription()}</p>
             <div style={{ marginTop: '10px' }}>
-              {userRole?.canApprove && (
+              {canApprove && (
                 <IonChip color="success">
                   <IonIcon icon={checkmarkCircleOutline} />
                   <IonLabel>Can Approve Leaves</IonLabel>
@@ -269,7 +289,7 @@ const EmployeeManagement: React.FC = () => {
               <IonSegmentButton value="all">
                 <IonLabel>All</IonLabel>
               </IonSegmentButton>
-              {userRole?.level <= 1 && (
+              {highestLevel !== undefined && highestLevel <= 1 && (
                 <IonSegmentButton value="2">
                   <IonLabel>Program Chairs</IonLabel>
                 </IonSegmentButton>

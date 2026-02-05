@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   IonContent,
   IonSearchbar,
@@ -34,7 +34,15 @@ import RoleDebugger from "../../components/RoleDebugger"
 import { MainLayout } from "@components/layout"
 
 const EmployeeDirectory: React.FC = () => {
-  const { userRole, employee: currentEmployee, hasPermission } = useRole()
+  // Use new RBAC properties
+  const { 
+    primaryRole,
+    employee: currentEmployee, 
+    hasPermission,
+    highestLevel,
+    canApprove,
+    isHR 
+  } = useRole()
   const [searchText, setSearchText] = useState("")
   const [employees, setEmployees] = useState<EmployeeInformation[]>([])
   const [filteredEmployees, setFilteredEmployees] = useState<EmployeeInformation[]>([])
@@ -43,43 +51,61 @@ const EmployeeDirectory: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState("")
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState("")
+  
+  // Track if component is mounted to prevent state updates after unmount
+  const isMounted = useRef(true)
+  const hasInitialized = useRef(false)
+  
   // Load employees on component mount and subscribe to changes
   useEffect(() => {
-    if (userRole && currentEmployee) {
+    isMounted.current = true
+    
+    // Only initialize once when we have role data
+    if (!hasInitialized.current && (primaryRole || highestLevel !== undefined) && currentEmployee) {
+      hasInitialized.current = true
       loadEmployees()
     }
     
     // Subscribe to employee service changes
     const unsubscribe = employeeService.subscribe(() => {
-      if (userRole && currentEmployee) {
+      if ((primaryRole || highestLevel !== undefined) && currentEmployee && isMounted.current) {
         loadEmployees()
       }
     })
     
     // Cleanup subscription on component unmount
-    return () => unsubscribe()
-  }, [userRole, currentEmployee])
+    return () => {
+      isMounted.current = false
+      hasInitialized.current = false
+      unsubscribe()
+    }
+  }, [primaryRole, highestLevel, currentEmployee])
 
   // Filter employees when search text changes
   useEffect(() => {
     filterEmployees()
   }, [searchText, employees])
   const loadEmployees = async () => {
+    if (!isMounted.current) return
     try {
       setIsLoading(true)
       let employeeList: EmployeeInformation[] = []
       
-      // Role-based employee filtering
-      if (userRole?.level === 0) {
+      // Role-based employee filtering using highestLevel from RBAC
+      if (isHR || highestLevel === -1) {
+        // HR - can see all employees
+        employeeList = await employeeService.getAllEmployees()
+      } else if (highestLevel === 0) {
         // VPAA - can see all employees
-        employeeList = await employeeService.getAllEmployees()      } else if (userRole?.level === 1) {
+        employeeList = await employeeService.getAllEmployees()
+      } else if (highestLevel === 1) {
         // Dean - can see employees in their department
         if (currentEmployee?.departmentId) {
           employeeList = await employeeService.filterByDepartment(currentEmployee.departmentId)
         } else {
           employeeList = await employeeService.getAllEmployees()
         }
-      } else if (userRole?.level === 2) {
+      } else if (highestLevel === 2) {
         // Program Chair - can see employees in their program
         if (currentEmployee?.programId) {
           employeeList = await employeeService.filterByProgram(currentEmployee.programId)
@@ -99,15 +125,19 @@ const EmployeeDirectory: React.FC = () => {
         }
       }
       
+      if (!isMounted.current) return
+      
       setEmployees(employeeList)
       setToastMessage(`Loaded ${employeeList.length} employees`)
       setShowToast(true)
     } catch (error) {
       console.error("Error loading employees:", error)
-      setAlertMessage("Failed to load employees. Please try again.")
-      setShowAlert(true)
+      if (isMounted.current) {
+        setAlertMessage("Failed to load employees. Please try again.")
+        setShowAlert(true)
+      }
     } finally {
-      setIsLoading(false)
+      if (isMounted.current) setIsLoading(false)
     }
   }
   const filterEmployees = () => {
@@ -134,9 +164,9 @@ const EmployeeDirectory: React.FC = () => {
   }
   // Helper function to get the scope description
   const getScopeDescription = () => {
-    if (!userRole || !currentEmployee) return "Loading..."
+    if (highestLevel === undefined || !currentEmployee) return "Loading..."
     
-    const roleTitles = {
+    const roleTitles: { [key: number]: string } = {
       0: "VPAA (Vice President for Academic Affairs)",
       1: "Dean",
       2: "Program Chair",
@@ -146,9 +176,9 @@ const EmployeeDirectory: React.FC = () => {
       99: "Employee"
     };
     
-    const roleTitle = roleTitles[userRole.level as keyof typeof roleTitles] || "Unknown Role";
+    const roleTitle = roleTitles[highestLevel] || "Unknown Role";
     
-    switch (userRole.level) {
+    switch (highestLevel) {
       case 0:
         return `${roleTitle} - All Employees (${employees.length} total)`;
       case 1:
@@ -165,9 +195,9 @@ const EmployeeDirectory: React.FC = () => {
 
   // Helper function to get detailed scope explanation
   const getScopeExplanation = () => {
-    if (!userRole) return "";
+    if (highestLevel === undefined) return "";
     
-    switch (userRole.level) {
+    switch (highestLevel) {
       case 0:
         return "As VPAA, you have access to view all employees across all departments and programs in the organization.";
       case 1:
@@ -204,8 +234,8 @@ const EmployeeDirectory: React.FC = () => {
 
   // Helper function to get department name (with fallback)
   const getDepartmentDisplay = (employee: EmployeeInformation) => {
-    // Hide department for VPAA (level 0)
-    if (userRole?.level === 0) return null;
+    // Hide department for VPAA (level 0) or HR
+    if (isHR || highestLevel === 0) return null;
     return employee.department_name || "Unknown Department"
   };
   return (
@@ -233,21 +263,21 @@ const EmployeeDirectory: React.FC = () => {
             <IonCardTitle>
               <IonIcon icon={filter} style={{ marginRight: '8px' }} />
               {getScopeDescription()}
-              <IonBadge color={userRole?.level === 0 ? 'success' : userRole?.level === 1 ? 'warning' : userRole?.level === 2 ? 'primary' : 'medium'} style={{ marginLeft: '8px' }}>
-                Level {userRole?.level}
+              <IonBadge color={isHR ? 'tertiary' : highestLevel === 0 ? 'success' : highestLevel === 1 ? 'warning' : highestLevel === 2 ? 'primary' : 'medium'} style={{ marginLeft: '8px' }}>
+                {isHR ? 'HR' : `Level ${highestLevel}`}
               </IonBadge>
             </IonCardTitle>
           </IonCardHeader>
           <IonCardContent>
             <p>{getScopeExplanation()}</p>
             <div style={{ marginTop: '10px' }}>
-              {userRole?.canApprove && (
+              {canApprove && (
                 <IonChip color="success">
                   <IonIcon icon={checkmarkCircleOutline} />
                   <IonLabel>Can Approve Leaves</IonLabel>
                 </IonChip>
               )}
-              {userRole?.level !== undefined && userRole.level <= 2 && (
+              {(isHR || (highestLevel !== undefined && highestLevel <= 2)) && (
                 <IonChip color="primary">
                   <IonIcon icon={shieldOutline} />
                   <IonLabel>Management Role</IonLabel>

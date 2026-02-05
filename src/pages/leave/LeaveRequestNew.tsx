@@ -47,7 +47,7 @@ import leaveService, { type LeaveRequest as LeaveRequestType, type LeaveCredit, 
 
 const LeaveRequest: React.FC = () => {
   const history = useHistory()
-  const { userRole, employee } = useRole()
+  const { primaryRole, employee } = useRole()
   
   // Form state
   const [leaveType, setLeaveType] = useState<string>("Vacation Leave")

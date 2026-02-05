@@ -1,7 +1,7 @@
 // LeaveApproval.tsx - Role-based Leave Approval Management
 // Two-step approval: 1) Supervisor pre-approval, 2) HR final approval
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   IonContent,
   IonCard,
@@ -51,7 +51,7 @@ import employeeService from '../../services/EmployeeServiceNew';
 import { MainLayout } from '@components/layout';
 
 const LeaveApproval: React.FC = () => {
-  const { userRole, employee, loading: roleLoading, hasPermission } = useRole();
+  const { primaryRole, employee, loading: roleLoading, hasPermission, isHR: isHRRole, canApprove: roleCanApprove } = useRole();
   
   // State management
   const [activeSegment, setActiveSegment] = useState<string>('supervisor');
@@ -80,66 +80,102 @@ const LeaveApproval: React.FC = () => {
   const [leaveCreditBalance, setLeaveCreditBalance] = useState<number | null>(null);
   const [currentApprovalType, setCurrentApprovalType] = useState<'supervisor' | 'hr' | 'hr_bypass'>('supervisor');
 
-  // Check if user is HR
-  const isHR = employee?.isHR || false;
-  const isSupervisor = hasPermission('approveRequests') && !isHR;
+  // Check if user is HR - use RBAC isHR property
+  const isHR = isHRRole || employee?.isHR || false;
+  const isSupervisor = roleCanApprove && !isHR;
+
+  // Track if component is mounted to prevent state updates after unmount
+  const isMounted = useRef(true);
+  const isLoadingData = useRef(false);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (!roleLoading) {
+    isMounted.current = true;
+    isLoadingData.current = false;
+    
+    // Only initialize once per mount
+    if (!hasInitialized.current && !roleLoading) {
+      hasInitialized.current = true;
+      
+      // Reset modal states on mount
+      setShowDetailsModal(false);
+      setShowApprovalModal(false);
+      setShowRejectionModal(false);
+      setShowBypassModal(false);
+      setSelectedRequest(null);
+      
       // Set initial segment based on user role
-      if (isHR) {
+      if (isHRRole) {
         setActiveSegment('hr');
-      } else if (isSupervisor) {
+      } else if (roleCanApprove) {
         setActiveSegment('supervisor');
       }
       loadAllPendingRequests();
     }
-  }, [roleLoading, isHR, isSupervisor]);
+    
+    return () => {
+      isMounted.current = false;
+      hasInitialized.current = false;
+      // Don't set state in cleanup - just mark as unmounted
+    };
+  }, [roleLoading]);
 
   const loadAllPendingRequests = async () => {
+    if (!isMounted.current || isLoadingData.current) return;
+    isLoadingData.current = true;
     setLoading(true);
     try {
       // Load supervisor pending requests if user has supervisor permissions
       if (hasPermission('approveRequests')) {
         try {
           const supervisorData = await leaveService.getPendingApprovalsForMe();
-          setPendingRequests(supervisorData.requests || []);
-          setApproverInfo(supervisorData.approver_info || null);
+          if (isMounted.current) {
+            setPendingRequests(supervisorData.requests || []);
+            setApproverInfo(supervisorData.approver_info || null);
+          }
         } catch (error) {
           console.error('Error loading supervisor pending requests:', error);
-          setPendingRequests([]);
+          if (isMounted.current) setPendingRequests([]);
         }
       }
+
+      if (!isMounted.current) return;
 
       // Load HR pending requests if user is HR
       if (isHR) {
         try {
           const hrData = await leaveService.getPendingForHRApproval();
-          setHrPendingRequests(hrData.requests || []);
-          setHrApproverInfo(hrData.approver_info || null);
+          if (isMounted.current) {
+            setHrPendingRequests(hrData.requests || []);
+            setHrApproverInfo(hrData.approver_info || null);
+          }
         } catch (error) {
           console.error('Error loading HR pending requests:', error);
-          setHrPendingRequests([]);
+          if (isMounted.current) setHrPendingRequests([]);
         }
+
+        if (!isMounted.current) return;
 
         // Load all pending requests for HR bypass
         try {
           const bypassData = await leaveService.getAllPendingForHR();
-          setHrBypassRequests(bypassData.requests || []);
+          if (isMounted.current) setHrBypassRequests(bypassData.requests || []);
         } catch (error) {
           console.error('Error loading HR bypass requests:', error);
-          setHrBypassRequests([]);
+          if (isMounted.current) setHrBypassRequests([]);
         }
       }
     } catch (error) {
       console.error('Error loading pending requests:', error);
-      showToastMessage('Error loading pending requests', 'danger');
+      if (isMounted.current) showToastMessage('Error loading pending requests', 'danger');
     } finally {
-      setLoading(false);
+      isLoadingData.current = false;
+      if (isMounted.current) setLoading(false);
     }
   };
 
   const handleRefresh = async (event: CustomEvent) => {
+    isLoadingData.current = false; // Allow refresh to trigger reload
     await loadAllPendingRequests();
     event.detail.complete();
   };

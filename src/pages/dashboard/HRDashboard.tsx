@@ -19,7 +19,7 @@ import {
 import { useHistory } from "react-router"
 import { useAudit } from "../../hooks/useAudit"
 import { useRole } from "@/contexts/RoleContext"
-import AuthService from "@/services/AuthService" //123
+import AuthService from "@/services/AuthService"
 import leaveService from "@/services/LeaveService"
 import EmployeeService from "@/services/EmployeeService"
 import { MainLayout } from "@components/layout/MainLayout"
@@ -40,7 +40,17 @@ import {
 const HRDashboard: React.FC = () => {
   const history = useHistory()
   const { logEvent } = useAudit()
-  const { userRole, employee, loading, hasPermission, refreshRole } = useRole()
+  // Use new RBAC properties
+  const { 
+    primaryRole,
+    employee, 
+    loading, 
+    hasPermission, 
+    refreshPermissions,
+    canApprove,
+    isHR,
+    highestLevel 
+  } = useRole()
 
   // State management
   const [pendingRequests, setPendingRequests] = useState(0)
@@ -57,9 +67,10 @@ const HRDashboard: React.FC = () => {
   const [currentEmployee, setCurrentEmployee] = useState<any>(null)
   const [fetchingEmployeeData, setFetchingEmployeeData] = useState(false)
 
-  // Use refs to prevent infinite loops
+  // Use refs to prevent infinite loops and track component mount state
   const hasLoadedData = useRef(false)
   const isLoadingData = useRef(false)
+  const isMounted = useRef(true)
 
   // Helper function to get current authenticated user
   const getCurrentAuthUser = () => {
@@ -79,10 +90,12 @@ const HRDashboard: React.FC = () => {
   // Fetch employee data from backend using authenticated user ID
   const fetchEmployeeFromBackend = async (authUserId: string) => {
     try {
-      setFetchingEmployeeData(true)
+      if (isMounted.current) setFetchingEmployeeData(true)
       console.log("Fetching employee data for auth user ID:", authUserId)
 
       const employeeData = await EmployeeService.getEmployeeByAuthId(authUserId)
+      if (!isMounted.current) return null
+      
       if (employeeData) {
         console.log("Fetched employee from backend:", employeeData)
         setCurrentEmployee(employeeData)
@@ -99,27 +112,31 @@ const HRDashboard: React.FC = () => {
       console.error("Error fetching employee from backend:", error)
       return null
     } finally {
-      setFetchingEmployeeData(false)
+      if (isMounted.current) setFetchingEmployeeData(false)
     }
   }
 
-  // Helper function to check if user has permission
+  // Helper function to check if user has permission - now uses RBAC hasPermission
   const hasCurrentPermission = (permission: string): boolean => {
-    return userRole?.permissions?.[permission as keyof typeof userRole.permissions] || false
+    return hasPermission(permission)
   }
 
   // Initialize authenticated user from localStorage on component mount
   useEffect(() => {
+    isMounted.current = true
+    hasLoadedData.current = false
+    isLoadingData.current = false
+
     const initializeAuthUser = async () => {
       try {
         const storedAuthUser = localStorage.getItem("authUser")
-        if (storedAuthUser) {
+        if (storedAuthUser && isMounted.current) {
           const authUser = JSON.parse(storedAuthUser)
           setCurrentUser(authUser)
           console.log("Initialized auth user:", authUser)
 
           // Fetch employee data from backend using auth user ID
-          if (authUser.uid && authUser.isAuthenticated) {
+          if (authUser.uid && authUser.isAuthenticated && isMounted.current) {
             await fetchEmployeeFromBackend(authUser.uid)
           }
         }
@@ -129,23 +146,16 @@ const HRDashboard: React.FC = () => {
     }
 
     initializeAuthUser()
+
+    // Cleanup function - mark component as unmounted
+    return () => {
+      isMounted.current = false
+    }
   }, [])
 
   useEffect(() => {
-    console.log("useEffect triggered:", {
-      currentUser: !!currentUser,
-      currentEmployee: !!currentEmployee,
-      userRole: !!userRole,
-      employee: !!employee,
-      loading,
-      hasLoadedData: hasLoadedData.current,
-      isLoadingData: isLoadingData.current,
-      isAuthenticated: currentUser?.isAuthenticated,
-    })
-
     // Prevent infinite loops - don't load if already loaded or currently loading
-    if (hasLoadedData.current || isLoadingData.current) {
-      console.log("Skipping load - already loaded or loading")
+    if (hasLoadedData.current || isLoadingData.current || !isMounted.current) {
       return
     }
 
@@ -154,37 +164,38 @@ const HRDashboard: React.FC = () => {
     const hasEmployeeData = currentEmployee || employee
     const isRoleContextReady = !loading
 
+    console.log("Dashboard data check:", { hasUserData, hasEmployeeData, isRoleContextReady })
+
     if (hasUserData && hasEmployeeData && isRoleContextReady) {
       console.log("All data ready, loading dashboard...")
-      // Use the employee data from context if currentEmployee is not set
+      // Store the effective employee without triggering re-render in this effect
+      const effectiveEmployee = currentEmployee || employee
       if (!currentEmployee && employee) {
         setCurrentEmployee(employee)
       }
       loadDashboardData()
-    } else {
-      console.log("Waiting for data:", { hasUserData, hasEmployeeData, isRoleContextReady })
     }
   }, [currentUser, currentEmployee, employee, loading])
 
-  // Separate effect to watch userRole changes
+  // Separate effect to watch primaryRole changes
   useEffect(() => {
     // Only trigger a reload if we've already loaded data once and the role changes
-    if (hasLoadedData.current && userRole) {
+    if (hasLoadedData.current && primaryRole) {
       console.log("User role changed after initial load, may need to update UI")
       setDashboardLoading(false)
     }
-  }, [userRole])
+  }, [primaryRole])
 
   const loadDashboardData = async () => {
-    // Prevent concurrent calls
-    if (isLoadingData.current) {
-      console.log("Already loading data, skipping...")
+    // Prevent concurrent calls or calls after unmount
+    if (isLoadingData.current || !isMounted.current) {
+      console.log("Already loading data or component unmounted, skipping...")
       return
     }
 
     try {
       isLoadingData.current = true
-      setDashboardLoading(true)
+      if (isMounted.current) setDashboardLoading(true)
 
       // Ensure we have current user data
       let authUser = getCurrentAuthUser()
@@ -216,6 +227,7 @@ const HRDashboard: React.FC = () => {
 
       // Load user's own leave requests with detailed breakdown
       const myRequestsData = await leaveService.getMyLeaveRequests()
+      if (!isMounted.current) return
       console.log("Loaded leave requests:", myRequestsData)
       setMyRequests(myRequestsData.length)
 
@@ -228,6 +240,7 @@ const HRDashboard: React.FC = () => {
 
       // Load leave credits for detailed balance information
       const creditsData = await leaveService.getMyLeaveCredits()
+      if (!isMounted.current) return
       console.log("Loaded leave credits:", creditsData)
 
       // Store the detailed breakdown
@@ -247,29 +260,35 @@ const HRDashboard: React.FC = () => {
       setUsedLeaveCredits(usedCredits)
       setLeaveBalance(remainingBalance)
 
-      // For approvers, get pending requests count
-      if (userRole?.canApprove) {
+      // For approvers, get pending requests count - use canApprove from RBAC
+      if (canApprove && isMounted.current) {
         try {
           const approvalsData = await leaveService.getPendingApprovalsForMe()
-          setPendingRequests(approvalsData.requests?.length || 0)
+          if (isMounted.current) {
+            setPendingRequests(approvalsData.requests?.length || 0)
+          }
         } catch (error) {
           console.error("Error loading pending approvals:", error)
-          setPendingRequests(0)
+          if (isMounted.current) setPendingRequests(0)
         }
       }
     } catch (error) {
       console.error("Error loading dashboard data:", error)
       // Set default values on error
-      setMyRequests(0)
-      setApprovedRequests(0)
-      setRejectedRequests(0)
-      setLeaveBalance(0)
-      setTotalLeaveCredits(0)
-      setUsedLeaveCredits(0)
-      setLeaveCreditsBreakdown([])
-      setPendingRequests(0)
+      if (isMounted.current) {
+        setMyRequests(0)
+        setApprovedRequests(0)
+        setRejectedRequests(0)
+        setLeaveBalance(0)
+        setTotalLeaveCredits(0)
+        setUsedLeaveCredits(0)
+        setLeaveCreditsBreakdown([])
+        setPendingRequests(0)
+      }
     } finally {
-      setDashboardLoading(false)
+      if (isMounted.current) {
+        setDashboardLoading(false)
+      }
       isLoadingData.current = false
       hasLoadedData.current = true
       console.log("Dashboard data loading complete")
@@ -310,6 +329,8 @@ const HRDashboard: React.FC = () => {
   const refreshDashboard = async () => {
     console.log("Manual refresh triggered")
 
+    if (!isMounted.current) return
+
     // Reset the loaded flag to allow reload
     hasLoadedData.current = false
     isLoadingData.current = false
@@ -322,15 +343,17 @@ const HRDashboard: React.FC = () => {
       const fetchedEmployee = await fetchEmployeeFromBackend(authUser.uid)
 
       // Refresh the role context as well
-      if (fetchedEmployee) {
-        await refreshRole()
+      if (fetchedEmployee && isMounted.current) {
+        await refreshPermissions()
       }
 
       // Force reload dashboard data
-      await loadDashboardData()
+      if (isMounted.current) {
+        await loadDashboardData()
+      }
     } else {
       console.warn("No authenticated user found for refresh")
-      setDashboardLoading(false)
+      if (isMounted.current) setDashboardLoading(false)
     }
   }
 
@@ -358,12 +381,13 @@ const HRDashboard: React.FC = () => {
 
   // Get dashboard title based on role
   const getDashboardTitle = (): string => {
-    const isHRUser = currentEmployee?.isHR || userRole?.level === -1 || userRole?.title === "HR Administrator"
+    // Use new RBAC properties
+    const isHRUser = isHR || currentEmployee?.isHR || highestLevel === -1
     if (isHRUser) return "HR Dashboard"
-    if (userRole?.title === "System Administrator") return "Admin Dashboard"
-    if (userRole?.level === 0) return "VPAA Dashboard"
-    if (userRole?.level === 1) return "Dean Dashboard"
-    if (userRole?.level === 2) return "Program Chair Dashboard"
+    if (primaryRole?.code === "SYS_ADMIN") return "Admin Dashboard"
+    if (highestLevel === 0) return "VPAA Dashboard"
+    if (highestLevel === 1) return "Dean Dashboard"
+    if (highestLevel === 2) return "Program Chair Dashboard"
     return "Employee Dashboard"
   }
 
@@ -425,7 +449,8 @@ const HRDashboard: React.FC = () => {
     },
   ]
 
-  if (userRole?.canApprove || hasPermission("approveRequests")) {
+  // Use canApprove from RBAC
+  if (canApprove || hasPermission("approveRequests")) {
     dashboardStats.push({
       title: "Pending Approvals",
       value: pendingRequests,
@@ -435,8 +460,8 @@ const HRDashboard: React.FC = () => {
     })
   }
 
-  // Determine if user is HR
-  const isHRUser = currentEmployee?.isHR || userRole?.level === -1 || userRole?.title === "HR Administrator"
+  // Determine if user is HR - use isHR from RBAC
+  const isHRUser = isHR || currentEmployee?.isHR || highestLevel === -1
 
   return (
     <MainLayout 
@@ -449,7 +474,7 @@ const HRDashboard: React.FC = () => {
         {/* Welcome Banner */}
         <WelcomeBanner
           userName={currentUser?.displayName?.split(" ")[0] || currentEmployee?.firstName || "User"}
-          position={currentEmployee?.position_title || userRole?.title || "Employee"}
+          position={currentEmployee?.position_title || primaryRole?.name || "Employee"}
           department={currentEmployee?.department_name || "Department"}
           employeeId={currentEmployee?.employeeId || currentUser?.uid || "N/A"}
           profileImage={currentEmployee?.profileImage}
@@ -460,7 +485,7 @@ const HRDashboard: React.FC = () => {
         {/* Quick Actions */}
         <QuickActions
           isHRUser={isHRUser}
-          canApprove={userRole?.canApprove || false}
+          canApprove={canApprove}
           hasPermission={hasPermission}
         />
 

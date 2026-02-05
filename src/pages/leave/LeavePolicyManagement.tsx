@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   IonContent,
   IonList,
@@ -42,16 +42,28 @@ const LeavePolicyManagement: React.FC = () => {
   const [showAlert, setShowAlert] = useState(false)
   const [alertMessage, setAlertMessage] = useState("")
   const [showDeleteAlert, setShowDeleteAlert] = useState(false)
+  
+  // Track if component is mounted to prevent state updates after unmount
+  const isMounted = useRef(true)
+  
   // Load policies from API
   useEffect(() => {
+    isMounted.current = true
     loadPolicies()
+    
+    return () => {
+      isMounted.current = false
+    }
   }, [])
 
   const loadPolicies = async () => {
+    if (!isMounted.current) return
     try {
       setLoading(true)
       console.log('Attempting to load leave policies...')
       const data = await leaveService.getLeavePolicies()
+      if (!isMounted.current) return
+      
       console.log('Leave policies API response:', data)
       console.log('Type of response:', typeof data)
       console.log('Is array:', Array.isArray(data))
@@ -66,12 +78,14 @@ const LeavePolicyManagement: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error loading leave policies:', error)
-      setAlertMessage(`Error loading leave policies: ${error?.message || error}`)
-      setShowAlert(true)
-      // Set empty array on error
-      setPolicies([])
+      if (isMounted.current) {
+        setAlertMessage(`Error loading leave policies: ${error?.message || error}`)
+        setShowAlert(true)
+        // Set empty array on error
+        setPolicies([])
+      }
     } finally {
-      setLoading(false)
+      if (isMounted.current) setLoading(false)
     }
   }
 

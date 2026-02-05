@@ -50,6 +50,7 @@ import "@ionic/react/css/display.css"
 /* Theme variables */
 import "./theme/variables.css"
 import { AuthProvider } from "./services/AuthContext"
+import AppShell from "./components/layout/AppShell"
 
 setupIonicReact()
 
@@ -58,7 +59,8 @@ const App: React.FC = () => (
     <AuthProvider>
       <RoleProvider>
         <IonReactRouter>
-          <IonRouterOutlet id="main-content">
+          <AppShell>
+            <IonRouterOutlet id="main-content">
               {/* Public routes */}
               <Route path="/sign-in" component={SignIn} exact={true} />
               <Route path="/sign-in-direct" component={SignInDirect} exact={true} />
@@ -154,6 +156,7 @@ const App: React.FC = () => (
               {/* Default route */}
               <Route exact path="/" render={() => <Redirect to="/sign-in" />} />
             </IonRouterOutlet>
+          </AppShell>
         </IonReactRouter>
       </RoleProvider>
     </AuthProvider>

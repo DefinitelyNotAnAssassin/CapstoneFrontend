@@ -21,7 +21,7 @@ import {
 import { useRole } from '../contexts/RoleContext';
 
 const RoleDebugger: React.FC = () => {
-  const { userRole, employee, loading, hasPermission } = useRole();
+  const { primaryRole, highestLevel, canApprove, isHR, approvalScope, employee, loading, hasPermission } = useRole();
 
   const permissions = [
     'viewAllRequests',
@@ -68,12 +68,13 @@ const RoleDebugger: React.FC = () => {
         <IonItem lines="none">
           <IonLabel>
             <h3>Role Information</h3>
-            <p>Title: {userRole?.title || 'No role assigned'}</p>
-            <p>Level: {userRole?.level ?? 'Unknown'}</p>
-            <p>Approval Scope: {userRole?.approvalScope || 'None'}</p>
+            <p>Role: {primaryRole?.role_name || 'No role assigned'}</p>
+            <p>Level: {highestLevel ?? 'Unknown'}</p>
+            <p>Approval Scope: {approvalScope || 'None'}</p>
+            <p>Is HR: {isHR ? 'Yes' : 'No'}</p>
           </IonLabel>
-          <IonBadge color={userRole?.canApprove ? 'success' : 'medium'}>
-            {userRole?.canApprove ? 'Can Approve' : 'Cannot Approve'}
+          <IonBadge color={canApprove ? 'success' : 'medium'}>
+            {canApprove ? 'Can Approve' : 'Cannot Approve'}
           </IonBadge>
         </IonItem>
 
@@ -108,7 +109,7 @@ const RoleDebugger: React.FC = () => {
           <IonLabel>
             <h3>Raw Role Data</h3>
             <p style={{ fontSize: '12px', fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
-              {JSON.stringify(userRole, null, 2)}
+              {JSON.stringify(primaryRole, null, 2)}
             </p>
           </IonLabel>
         </IonItem>

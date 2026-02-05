@@ -1,6 +1,6 @@
 // LeaveRequest.tsx - API-based Leave Request Management with Role-based Access Control
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   IonContent,
   IonCard,
@@ -72,12 +72,47 @@ const LeaveRequest: React.FC = () => {
     supporting_documents: [] as string[]
   });
 
+  // Track if component is mounted to prevent state updates after unmount
+  const isMounted = useRef(true);
+  const hasLoadedData = useRef(false);
+  const isLoadingData = useRef(false);
+  const hasInitialized = useRef(false);
+
   useEffect(() => {
-    if (!roleLoading) {
+    // Reset refs on mount
+    isMounted.current = true;
+    hasLoadedData.current = false;
+    isLoadingData.current = false;
+    
+    // Only initialize once per mount
+    if (!hasInitialized.current && !roleLoading) {
+      hasInitialized.current = true;
+      
+      // Reset all state on mount to ensure clean slate
+      setLoading(true);
+      setMyRequests([]);
+      setLeaveCredits([]);
+      setShowCreateModal(false);
+      setShowDetailsModal(false);
+      setSelectedRequest(null);
+      
       loadData();
     }
-  }, [roleLoading]);  const loadData = async () => {
+    
+    return () => {
+      isMounted.current = false;
+      hasInitialized.current = false;
+      // Don't set state in cleanup - just mark as unmounted
+    };
+  }, [roleLoading]);
+
+  const loadData = async () => {
+    // Prevent multiple concurrent loads
+    if (!isMounted.current || isLoadingData.current) return;
+    
+    isLoadingData.current = true;
     setLoading(true);
+    
     try {
       // Load data individually with fallback handling
       let requestsData: LeaveRequestType[] = [];
@@ -90,6 +125,8 @@ const LeaveRequest: React.FC = () => {
         requestsData = [];
       }
 
+      if (!isMounted.current) return;
+
       try {
         creditsData = await leaveService.getMyLeaveCredits();
       } catch (error) {
@@ -97,20 +134,27 @@ const LeaveRequest: React.FC = () => {
         creditsData = [];
       }
       
+      if (!isMounted.current) return;
+      
       setMyRequests(requestsData || []);
       setLeaveCredits(creditsData || []);
+      hasLoadedData.current = true;
     } catch (error) {
       console.error('Error loading leave data:', error);
-      showToastMessage('Error loading leave data', 'danger');
-      // Ensure all states are set to empty arrays as fallback
-      setMyRequests([]);
-      setLeaveCredits([]);
+      if (isMounted.current) {
+        showToastMessage('Error loading leave data', 'danger');
+        // Ensure all states are set to empty arrays as fallback
+        setMyRequests([]);
+        setLeaveCredits([]);
+      }
     } finally {
-      setLoading(false);
+      isLoadingData.current = false;
+      if (isMounted.current) setLoading(false);
     }
   };
 
   const handleRefresh = async (event: CustomEvent) => {
+    isLoadingData.current = false; // Allow refresh to trigger reload
     await loadData();
     event.detail.complete();
   };
