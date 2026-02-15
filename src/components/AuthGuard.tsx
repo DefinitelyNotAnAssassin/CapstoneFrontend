@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Redirect, Route, useHistory } from "react-router-dom";
-import { IonLoading } from "@ionic/react";
+import { IonPage, IonContent, IonSpinner } from "@ionic/react";
 import AuthService from "../services/AuthService";
 import { useRole } from "../contexts/RoleContext";
 
@@ -16,7 +16,11 @@ const getRoleBasedRedirect = (userRole: any, currentPath: string) => {
       currentPath.includes("/employee-") ||
       currentPath.includes("/organization") ||
       currentPath.includes("/reports") ||
-      currentPath.includes("/audit")) {
+      currentPath.includes("/audit") ||
+      currentPath.includes("/roles-") ||
+      currentPath.includes("/user-permissions") ||
+      currentPath.includes("/faculty") ||
+      currentPath.includes("/firebase")) {
     return null;
   }
   
@@ -24,18 +28,40 @@ const getRoleBasedRedirect = (userRole: any, currentPath: string) => {
   return "/hr-dashboard";
 };
 
+/**
+ * Inline loading component that renders inside an IonPage
+ * instead of using IonLoading overlay (which creates a backdrop that can block interaction).
+ */
+const InlineLoading: React.FC = () => (
+  <IonPage>
+    <IonContent>
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        gap: '16px',
+      }}>
+        <IonSpinner name="crescent" color="primary" style={{ width: '48px', height: '48px' }} />
+        <p style={{ color: 'var(--ion-color-medium)', fontSize: '0.9rem' }}>Loading...</p>
+      </div>
+    </IonContent>
+  </IonPage>
+);
+
 const AuthGuard: React.FC<{ 
   component: React.ComponentType<any>; 
   path: string; 
   exact?: boolean;
-  requirePermission?: string;
+  requirePermission?: string | string[];
 }> = ({
   component: Component,
   requirePermission,
   ...rest
 }) => {
   const currentUser = AuthService.getCurrentUser();
-  const { userRole, loading: roleLoading, hasPermission } = useRole();
+  const { userRole, loading: roleLoading, hasPermission, hasAnyPermission } = useRole();
   const [showLoading, setShowLoading] = useState(roleLoading);
   const history = useHistory();
 
@@ -95,13 +121,13 @@ const AuthGuard: React.FC<{
   const isDemoAdmin = checkForDemoAdmin();
   const isAuthenticated = currentUser || isDemoAdmin;
 
-  if (showLoading) {
-    return <IonLoading isOpen={true} message="Loading..." spinner="circles" duration={3000} />;
-  }
-
   // Check permission if required
-  if (requirePermission && isAuthenticated && userRole) {
-    if (!hasPermission(requirePermission as any)) {
+  if (requirePermission && isAuthenticated && !roleLoading && userRole) {
+    const hasAccess = Array.isArray(requirePermission)
+      ? hasAnyPermission(requirePermission)
+      : hasPermission(requirePermission);
+    
+    if (!hasAccess) {
       return (
         <Redirect
           to={{
@@ -116,18 +142,25 @@ const AuthGuard: React.FC<{
   return (
     <Route
       {...rest}
-      render={(props) =>
-        isAuthenticated ? (
-          <Component {...props} />
-        ) : (
-          <Redirect
-            to={{
-              pathname: "/sign-in",
-              state: { from: props.location }
-            }}
-          />
-        )
-      }
+      render={(props) => {
+        if (!isAuthenticated) {
+          return (
+            <Redirect
+              to={{
+                pathname: "/sign-in",
+                state: { from: props.location }
+              }}
+            />
+          );
+        }
+
+        // Show inline loading instead of IonLoading overlay
+        if (showLoading) {
+          return <InlineLoading />;
+        }
+
+        return <Component {...props} />;
+      }}
     />
   );
 };

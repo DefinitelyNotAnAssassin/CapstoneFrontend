@@ -370,26 +370,30 @@ const HRDashboard: React.FC = () => {
   // Show loading state while waiting for role context or employee data
   if (loading || fetchingEmployeeData) {
     return (
-      <LoadingState
-        message="Loading dashboard..."
-        submessage={
-          loading
-            ? "Loading role and permissions..."
-            : fetchingEmployeeData
-              ? "Fetching employee data..."
-              : "Initializing your session..."
-        }
-      />
+      <MainLayout title={getDashboardTitle()} hideHeader={true}>
+        <LoadingState
+          message="Loading dashboard..."
+          submessage={
+            loading
+              ? "Loading role and permissions..."
+              : fetchingEmployeeData
+                ? "Fetching employee data..."
+                : "Initializing your session..."
+          }
+        />
+      </MainLayout>
     )
   }
 
   // If not authenticated, redirect should happen from AuthGuard
   if (!currentUser?.isAuthenticated) {
     return (
-      <LoadingState
-        message="Checking authentication..."
-        submessage="Please wait while we verify your credentials..."
-      />
+      <MainLayout title="Dashboard" hideHeader={true}>
+        <LoadingState
+          message="Checking authentication..."
+          submessage="Please wait while we verify your credentials..."
+        />
+      </MainLayout>
     )
   }
 

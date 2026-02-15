@@ -18,7 +18,7 @@ export interface NavItem {
   title: string
   icon: string
   path: string
-  permission?: string
+  permissions?: string[]
   hrOnly?: boolean
   approverOnly?: boolean
   dividerAfter?: boolean
@@ -57,7 +57,7 @@ export const navigationConfig: NavSection[] = [
         title: "Leave Approval",
         icon: documentTextOutline,
         path: "/leave-approval",
-        permission: "approveRequests",
+        permissions: ["leave_approve_program", "leave_approve_department", "leave_approve_all"],
         approverOnly: true,
       },
       {
@@ -65,14 +65,14 @@ export const navigationConfig: NavSection[] = [
         title: "Leave Policies",
         icon: listOutline,
         path: "/leave-policy-management",
-        permission: "manageLeavePolicies",
+        permissions: ["leave_manage_policies"],
       },
       {
         id: "leave-credits",
         title: "Leave Credits",
         icon: calendarOutline,
         path: "/leave-credit-management",
-        permission: "manageLeaveCredits",
+        permissions: ["leave_manage_credits"],
         hrOnly: true,
         dividerAfter: true,
       },
@@ -86,14 +86,14 @@ export const navigationConfig: NavSection[] = [
         title: "Employee Directory",
         icon: peopleOutline,
         path: "/employee-directory",
-        permission: "manageEmployees",
+        permissions: ["employee_view_all", "employee_view_department", "employee_view_team"],
       },
       {
         id: "employee-management",
         title: "Employee Management",
         icon: personOutline,
         path: "/employee-management",
-        permission: "manageEmployees",
+        permissions: ["employee_create", "employee_edit_all"],
         hrOnly: true,
       },
       {
@@ -101,7 +101,7 @@ export const navigationConfig: NavSection[] = [
         title: "Organization Structure",
         icon: businessOutline,
         path: "/organization-management",
-        permission: "manageEmployees",
+        permissions: ["org_manage_departments", "org_manage_programs"],
         dividerAfter: true,
       },
     ],
@@ -114,14 +114,14 @@ export const navigationConfig: NavSection[] = [
         title: "Reports",
         icon: statsChartOutline,
         path: "/reports",
-        permission: "viewReports",
+        permissions: ["reports_view_team", "reports_view_department", "reports_view_all"],
       },
       {
         id: "audit-trail",
         title: "Audit Trail",
         icon: shieldOutline,
         path: "/audit-trail",
-        permission: "viewReports",
+        permissions: ["audit_view"],
       },
     ],
   },
@@ -133,7 +133,7 @@ export const navigationConfig: NavSection[] = [
         title: "Roles & Permissions",
         icon: keyOutline,
         path: "/roles-management",
-        permission: "rbac_manage_roles",
+        permissions: ["rbac_manage_roles"],
         hrOnly: true,
       },
       {
@@ -141,7 +141,7 @@ export const navigationConfig: NavSection[] = [
         title: "User Permissions",
         icon: lockClosedOutline,
         path: "/user-permissions",
-        permission: "rbac_assign_roles",
+        permissions: ["rbac_assign_roles"],
         hrOnly: true,
       },
     ],
@@ -164,8 +164,11 @@ export const isNavItemVisible = (
   // Check if item requires approver role
   if (item.approverOnly && !canApprove && !isHRUser) return false
 
-  // Check permission if specified
-  if (item.permission && !hasPermission(item.permission)) return false
+  // Check permissions if specified (user needs at least one of the permissions)
+  if (item.permissions && item.permissions.length > 0) {
+    const hasAnyPermission = item.permissions.some(perm => hasPermission(perm))
+    if (!hasAnyPermission) return false
+  }
 
   return true
 }

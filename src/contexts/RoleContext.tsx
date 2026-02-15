@@ -341,7 +341,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         scope = 'department';
         approve = true;
         perms.push('leave_view_department', 'leave_approve_department', 'leave_reject',
-                   'leave_manage_credits', 'employee_view_department', 'reports_view_department');
+                   'leave_manage_credits', 'employee_view_department', 'reports_view_department' );
       } else if (level === 2) { // PC
         scope = 'program';
         approve = true;

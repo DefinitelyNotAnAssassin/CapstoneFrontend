@@ -463,7 +463,7 @@ const LeaveApproval: React.FC = () => {
               <IonSegmentButton value="hr_bypass">
                 <IonLabel>Direct Approve</IonLabel>
                 {hrBypassRequests.length > 0 && (
-                  <IonBadge color="danger">{hrBypassRequests.length}</IonBadge>
+                  <IonBadge color="">{hrBypassRequests.length}</IonBadge>
                 )}
               </IonSegmentButton>
             )}
@@ -1065,8 +1065,8 @@ const LeaveApproval: React.FC = () => {
           className="large-modal"
         >
           <IonHeader>
-            <IonToolbar color="warning">
-              <IonTitle>Direct Approve (Bypass Supervisor)</IonTitle>
+            <IonToolbar color="">
+              <IonTitle className='text-xl font-semibold mx-4'>Direct Approve (Bypass Supervisor)</IonTitle>
               <IonButtons slot="end">
                 <IonButton onClick={() => setShowBypassModal(false)}>Cancel</IonButton>
               </IonButtons>
@@ -1075,10 +1075,10 @@ const LeaveApproval: React.FC = () => {
           <IonContent className="ion-padding">
             {selectedRequest && (
               <>
-                <IonCard color="warning">
+                <IonCard className="bg-gray-600">
                   <IonCardContent>
-                    <IonText>
-                      <h3>⚠️ Bypassing Supervisor Approval</h3>
+                    <IonText className='text-white'>
+                      <h3 className='text-xl font-semibold text-red-400'>⚠️ Bypassing Supervisor Approval</h3>
                       <p>You are about to approve this request directly, bypassing the supervisor pre-approval step.</p>
                       <p><strong>This action should only be used when:</strong></p>
                       <ul>
@@ -1109,6 +1109,7 @@ const LeaveApproval: React.FC = () => {
                     <IonTextarea
                       value={bypassReason}
                       onIonInput={(e) => setBypassReason(e.detail.value!)}
+                      className='px-4'
                       placeholder="Please explain why supervisor approval is being bypassed..."
                       rows={3}
                     />
@@ -1118,6 +1119,8 @@ const LeaveApproval: React.FC = () => {
                     <IonTextarea
                       value={approvalNotes}
                       onIonInput={(e) => setApprovalNotes(e.detail.value!)}
+                                            className='px-4'
+
                       placeholder="Any additional notes for this approval..."
                       rows={2}
                     />

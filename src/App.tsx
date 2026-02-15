@@ -1,6 +1,7 @@
 import type React from "react"
+import { useState, useEffect } from "react"
 import { Redirect, Route } from "react-router-dom"
-import { IonApp, IonRouterOutlet, setupIonicReact } from "@ionic/react"
+import { IonApp, IonRouterOutlet, IonSplitPane, setupIonicReact } from "@ionic/react"
 import { IonReactRouter } from "@ionic/react-router"
 import Home from "./pages/Home"
 import EmployeeDirectory from "./pages/employee/EmployeeDirectory"
@@ -26,6 +27,7 @@ import VerifyOTP from "./pages/otp/VerifyOTP"
 import FirebaseSetup from "./pages/FirebaseSetup"
 import AuthGuard from "./components/AuthGuard"
 import { RoleProvider } from "./contexts/RoleContext"
+import { AppSidebar } from "./components/layout/AppSidebar"
 
 // RBAC Management Pages
 import RolesManagement from "./pages/rbac/RolesManagement"
@@ -58,7 +60,9 @@ const App: React.FC = () => (
     <AuthProvider>
       <RoleProvider>
         <IonReactRouter>
-          <IonRouterOutlet id="main-content">
+          <IonSplitPane contentId="main-content" when="md">
+            <AppSidebar contentId="main-content" />
+            <IonRouterOutlet id="main-content">
               {/* Public routes */}
               <Route path="/sign-in" component={SignIn} exact={true} />
               <Route path="/sign-in-direct" component={SignInDirect} exact={true} />
@@ -74,7 +78,7 @@ const App: React.FC = () => (
               <AuthGuard 
                 path="/leave-approval" 
                 component={LeaveApproval} 
-                requirePermission="approveRequests"
+                requirePermission={['leave_approve_program', 'leave_approve_department', 'leave_approve_all']}
                 exact={true} 
               />
               <AuthGuard 
@@ -90,43 +94,43 @@ const App: React.FC = () => (
               <AuthGuard 
                 path="/employee-detail/:id" 
                 component={EmployeeDetail} 
-                requirePermission="manageEmployees"
+                requirePermission={['employee_view_all', 'employee_view_department', 'employee_view_team']}
                 exact={true} 
               />
               <AuthGuard 
                 path="/employee-add" 
                 component={EmployeeAdd} 
-                requirePermission="manageEmployees"
+                requirePermission={['employee_create', 'employee_edit_all']}
                 exact={true} 
               />
               <AuthGuard 
                 path="/organization-management" 
                 component={OrganizationManagement} 
-                requirePermission="manageEmployees"
+                requirePermission={['org_manage_departments', 'org_manage_programs', 'hr_full_access']}
                 exact={true} 
               />
               <AuthGuard 
                 path="/leave-policy-management" 
                 component={LeavePolicyManagement} 
-                requirePermission="manageLeavePolicies"
+                requirePermission="leave_manage_policies"
                 exact={true} 
               />
               <AuthGuard 
                 path="/leave-credit-management" 
                 component={LeaveCreditManagement} 
-                requirePermission="manageLeaveCredits"
+                requirePermission="leave_manage_credits"
                 exact={true} 
               />
               <AuthGuard 
                 path="/reports" 
                 component={Reports} 
-                requirePermission="viewReports"
+                requirePermission={['reports_view_team', 'reports_view_department', 'reports_view_all']}
                 exact={true} 
               />
               <AuthGuard 
                 path="/audit-trail" 
                 component={AuditTrail} 
-                requirePermission="viewReports"
+                requirePermission="audit_view"
                 exact={true} 
               />
               
@@ -154,6 +158,7 @@ const App: React.FC = () => (
               {/* Default route */}
               <Route exact path="/" render={() => <Redirect to="/sign-in" />} />
             </IonRouterOutlet>
+          </IonSplitPane>
         </IonReactRouter>
       </RoleProvider>
     </AuthProvider>

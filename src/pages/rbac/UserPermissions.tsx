@@ -144,12 +144,46 @@ const UserPermissions: React.FC = () => {
   const loadInitialData = async () => {
     setLoading(true);
     try {
+      // Get auth headers
+      const token = localStorage.getItem('authToken');
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      console.log('Loading initial data...');
+      
       const [rolesData, employeesResponse, deptsResponse, progsResponse] = await Promise.all([
         rbacService.getAssignableRoles(),
-        fetch('http://127.0.0.1:8000/api/employees/').then(r => r.json()),
-        fetch('http://127.0.0.1:8000/api/departments/').then(r => r.json()),
-        fetch('http://127.0.0.1:8000/api/programs/').then(r => r.json()),
+        fetch('http://127.0.0.1:8000/api/employees/', { headers }).then(async r => {
+          if (!r.ok) throw new Error(`Employees API error: ${r.status}`);
+          const data = await r.json();
+          console.log('Employees response:', data);
+          // Handle paginated response
+          return Array.isArray(data) ? data : (data.results || []);
+        }),
+        fetch('http://127.0.0.1:8000/api/departments/', { headers }).then(async r => {
+          if (!r.ok) throw new Error(`Departments API error: ${r.status}`);
+          const data = await r.json();
+          console.log('Departments response:', data);
+          return Array.isArray(data) ? data : (data.results || []);
+        }),
+        fetch('http://127.0.0.1:8000/api/programs/', { headers }).then(async r => {
+          if (!r.ok) throw new Error(`Programs API error: ${r.status}`);
+          const data = await r.json();
+          console.log('Programs response:', data);
+          return Array.isArray(data) ? data : (data.results || []);
+        }),
       ]);
+      
+      console.log('Data loaded successfully:', {
+        roles: rolesData.length,
+        employees: employeesResponse.length,
+        departments: deptsResponse.length,
+        programs: progsResponse.length
+      });
       
       setAvailableRoles(rolesData);
       setEmployees(employeesResponse);
@@ -157,7 +191,7 @@ const UserPermissions: React.FC = () => {
       setPrograms(progsResponse);
     } catch (error) {
       console.error('Error loading data:', error);
-      showToast('Failed to load data', 'danger');
+      showToast(`Failed to load data: ${error instanceof Error ? error.message : 'Unknown error'}`, 'danger');
     } finally {
       setLoading(false);
     }
@@ -166,11 +200,13 @@ const UserPermissions: React.FC = () => {
   const loadEmployeeRoles = useCallback(async (employeeId: number) => {
     setLoadingRoles(true);
     try {
+      console.log('Loading roles for employee:', employeeId);
       const roles = await rbacService.getEmployeeRolesById(employeeId);
+      console.log('Employee roles loaded:', roles);
       setEmployeeRoles(roles);
     } catch (error) {
       console.error('Error loading employee roles:', error);
-      showToast('Failed to load employee roles', 'danger');
+      showToast(`Failed to load employee roles: ${error instanceof Error ? error.message : 'Unknown error'}`, 'danger');
     } finally {
       setLoadingRoles(false);
     }
@@ -544,38 +580,40 @@ const UserPermissions: React.FC = () => {
                 />
               </IonItem>
 
-              <IonAccordion>
-                <IonItem slot="header">
-                  <IonLabel>Advanced Options</IonLabel>
-                </IonItem>
-                <div className="ion-padding" slot="content">
-                  <IonItem>
-                    <IonLabel position="stacked">Valid From</IonLabel>
-                    <IonDatetime
-                      value={assignForm.valid_from || undefined}
-                      onIonChange={(e) => setAssignForm({ ...assignForm, valid_from: e.detail.value as string || null })}
-                      presentation="date"
-                    />
+              <IonAccordionGroup>
+                <IonAccordion>
+                  <IonItem slot="header">
+                    <IonLabel>Advanced Options</IonLabel>
                   </IonItem>
-                  <IonItem>
-                    <IonLabel position="stacked">Valid Until</IonLabel>
-                    <IonDatetime
-                      value={assignForm.valid_until || undefined}
-                      onIonChange={(e) => setAssignForm({ ...assignForm, valid_until: e.detail.value as string || null })}
-                      presentation="date"
-                    />
-                  </IonItem>
-                  <IonItem>
-                    <IonLabel position="stacked">Notes</IonLabel>
-                    <IonTextarea
-                      value={assignForm.notes}
-                      onIonInput={(e) => setAssignForm({ ...assignForm, notes: e.detail.value || '' })}
-                      rows={3}
-                      placeholder="Optional notes about this role assignment..."
-                    />
-                  </IonItem>
-                </div>
-              </IonAccordion>
+                  <div className="ion-padding" slot="content">
+                    <IonItem>
+                      <IonLabel position="stacked">Valid From</IonLabel>
+                      <IonDatetime
+                        value={assignForm.valid_from || undefined}
+                        onIonChange={(e) => setAssignForm({ ...assignForm, valid_from: e.detail.value as string || null })}
+                        presentation="date"
+                      />
+                    </IonItem>
+                    <IonItem>
+                      <IonLabel position="stacked">Valid Until</IonLabel>
+                      <IonDatetime
+                        value={assignForm.valid_until || undefined}
+                        onIonChange={(e) => setAssignForm({ ...assignForm, valid_until: e.detail.value as string || null })}
+                        presentation="date"
+                      />
+                    </IonItem>
+                    <IonItem>
+                      <IonLabel position="stacked">Notes</IonLabel>
+                      <IonTextarea
+                        value={assignForm.notes}
+                        onIonInput={(e) => setAssignForm({ ...assignForm, notes: e.detail.value || '' })}
+                        rows={3}
+                        placeholder="Optional notes about this role assignment..."
+                      />
+                    </IonItem>
+                  </div>
+                </IonAccordion>
+              </IonAccordionGroup>
             </IonList>
 
             <IonButton expand="block" onClick={handleAssignRole} className="ion-margin-top">

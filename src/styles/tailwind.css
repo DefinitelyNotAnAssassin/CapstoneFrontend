@@ -287,3 +287,55 @@
 .animate-slide-up {
   animation: slideUp 0.3s ease-out;
 }
+/* Employee Directory Specific Styles */
+.employee-directory-container ion-item {
+  --background: transparent;
+  --padding-start: 0;
+  --inner-padding-end: 0;
+}
+
+.employee-directory-container ion-list {
+  background: transparent;
+  padding: 0;
+}
+
+.employee-directory-container ion-searchbar {
+  --background: white;
+  --border-radius: 12px;
+  --box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.employee-directory-container ion-card {
+  margin: 0;
+  box-shadow: none;
+}
+
+.custom-alert {
+  --backdrop-opacity: 0.6;
+}
+
+.custom-alert .alert-wrapper {
+  @apply rounded-xl shadow-2xl;
+}
+
+.custom-toast {
+  --border-radius: 12px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Hover effects for employee items */
+.employee-directory-container ion-item:hover {
+  --background: rgba(var(--ion-color-primary-rgb), 0.02);
+}
+
+/* Avatar enhancements */
+.employee-directory-container ion-avatar {
+  @apply ring-2 ring-slate-100;
+}
+
+/* Smooth transitions for all interactive elements */
+.employee-directory-container * {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}

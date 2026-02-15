@@ -222,6 +222,13 @@ const EmployeeManagement: React.FC = () => {
       showRefresh={true}
       onRefresh={() => loadManagedEmployees()}
       isLoading={isLoading}
+      fab={
+        <IonFab vertical="bottom" horizontal="end" slot="fixed">
+          <IonFabButton routerLink="/employee-add">
+            <IonIcon icon={add} />
+          </IonFabButton>
+        </IonFab>
+      }
     >
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent pullingIcon={refresh} refreshingSpinner="circles" />
@@ -339,15 +346,6 @@ const EmployeeManagement: React.FC = () => {
               </IonList>
             )}
           </>
-        )}
-
-        {/* Add Employee FAB - only show to users who can manage employees */}
-        {hasPermission('manageEmployees') && (
-          <IonFab vertical="bottom" horizontal="end" slot="fixed">
-            <IonFabButton routerLink="/employee-add">
-              <IonIcon icon={add} />
-            </IonFabButton>
-          </IonFab>
         )}
 
         <IonAlert

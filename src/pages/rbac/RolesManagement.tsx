@@ -8,14 +8,14 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  IonPage,
+  IonButton,
+  IonButtons,
+  IonIcon,
+  IonModal,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
-  IonButton,
-  IonIcon,
-  IonModal,
   IonInput,
   IonTextarea,
   IonSelect,
@@ -24,18 +24,14 @@ import {
   IonSpinner,
   IonAlert,
   IonToast,
-  IonButtons,
-  IonBackButton,
   IonToggle,
   IonGrid,
   IonRow,
-    IonCol,
-    IonChip,
-    IonLabel,
-    IonBadge,
-    IonItemDivider,
-
-
+  IonCol,
+  IonChip,
+  IonLabel,
+  IonBadge,
+  IonItemDivider,
 } from '@ionic/react';
 import {
   addOutline,
@@ -53,6 +49,7 @@ import {
   closeOutline,
   peopleOutline,
 } from 'ionicons/icons';
+import { MainLayout } from '@/components/layout/MainLayout';
 import rbacService, {
   Role,
   RoleList,
@@ -271,14 +268,14 @@ const RolesManagement: React.FC = () => {
   const renderRoleList = () => (
     <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5">
+      <div className="bg-gradient-to-r from-red-700 to-red-900 px-6 py-5">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-white/20 rounded-lg">
             <IonIcon icon={shieldCheckmarkOutline} className="w-6 h-6 text-white" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">System Roles</h2>
-            <p className="text-indigo-100 text-sm">{roles.length} roles configured</p>
+            <p className="text-red-100 text-sm">{roles.length} roles configured</p>
           </div>
         </div>
       </div>
@@ -296,7 +293,7 @@ const RolesManagement: React.FC = () => {
             onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search roles..."
             className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                       focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent
                        placeholder:text-slate-400 transition-all duration-200"
           />
         </div>
@@ -308,8 +305,8 @@ const RolesManagement: React.FC = () => {
               setShowCreateModal(true);
             }}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl
-                       bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold
-                       hover:from-indigo-600 hover:to-purple-600 transition-all duration-200
+                       bg-gradient-to-r from-red-600 to-red-800 text-white font-semibold
+                       hover:from-red-700 hover:to-red-900 transition-all duration-200
                        shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
           >
             <IonIcon icon={addOutline} className="w-5 h-5" />
@@ -334,12 +331,12 @@ const RolesManagement: React.FC = () => {
                 key={role.id}
                 onClick={() => loadRoleDetails(role.id)}
                 className={`flex items-center gap-4 px-4 py-4 cursor-pointer transition-all duration-200
-                           hover:bg-indigo-50 ${selectedRole?.id === role.id ? 'bg-indigo-100 border-l-4 border-indigo-500' : ''}`}
+                           hover:bg-red-50 ${selectedRole?.id === role.id ? 'bg-red-100 border-l-4 border-red-700' : ''}`}
               >
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm
                                 ${role.is_system 
                                   ? 'bg-gradient-to-br from-amber-400 to-orange-500' 
-                                  : 'bg-gradient-to-br from-indigo-400 to-purple-500'}`}>
+                                  : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
                   <IonIcon
                     icon={role.is_system ? lockClosedOutline : keyOutline}
                     className="w-6 h-6 text-white"
@@ -398,7 +395,7 @@ const RolesManagement: React.FC = () => {
               <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-lg
                               ${selectedRole.is_system 
                                 ? 'bg-gradient-to-br from-amber-400 to-orange-500' 
-                                : 'bg-gradient-to-br from-indigo-400 to-purple-500'}`}>
+                                : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
                 <IonIcon
                   icon={selectedRole.is_system ? lockClosedOutline : keyOutline}
                   className="w-7 h-7 text-white"
@@ -468,7 +465,7 @@ const RolesManagement: React.FC = () => {
                 onClick={openEditModal}
                 disabled={selectedRole.is_system}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm
-                           bg-indigo-500 text-white hover:bg-indigo-600 transition-all duration-200
+                           bg-red-600 text-white hover:bg-red-700 transition-all duration-200
                            disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
               >
                 <IonIcon icon={createOutline} className="w-4 h-4" />
@@ -503,7 +500,7 @@ const RolesManagement: React.FC = () => {
           {/* Permissions Section */}
           <div>
             <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-              <IonIcon icon={keyOutline} className="w-5 h-5 text-indigo-500" />
+              <IonIcon icon={keyOutline} className="w-5 h-5 text-red-700" />
               Permissions ({selectedRole.permission_codes.length})
             </h3>
             
@@ -525,7 +522,7 @@ const RolesManagement: React.FC = () => {
                     >
                       <span className="font-medium text-slate-700">{category.category_display}</span>
                       <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                           {categoryPerms.length}
                         </span>
                         <IonIcon 
@@ -577,7 +574,7 @@ const RolesManagement: React.FC = () => {
               <div className="flex items-center gap-2">
                 <span className={`px-2.5 py-1 rounded-full text-xs font-medium
                                 ${selectedCount > 0 
-                                  ? 'bg-indigo-100 text-indigo-700' 
+                                  ? 'bg-red-100 text-red-800' 
                                   : 'bg-slate-200 text-slate-600'}`}>
                   {selectedCount}/{category.permissions.length}
                 </span>
@@ -705,40 +702,20 @@ const RolesManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonButtons slot="start">
-              <IonBackButton defaultHref="/dashboard" />
-            </IonButtons>
-            <IonTitle>Roles Management</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent className="ion-padding">
-          <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <div className="w-16 h-16 mb-4 rounded-full bg-indigo-100 flex items-center justify-center animate-pulse">
-              <IonSpinner color="primary" />
-            </div>
-            <p className="text-slate-600 font-medium">Loading roles...</p>
+      <MainLayout title="Roles Management">
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <div className="w-16 h-16 mb-4 rounded-full bg-red-100 flex items-center justify-center animate-pulse">
+            <IonSpinner color="danger" />
           </div>
-        </IonContent>
-      </IonPage>
+          <p className="text-slate-600 font-medium">Loading roles...</p>
+        </div>
+      </MainLayout>
     );
   }
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="/dashboard" />
-          </IonButtons>
-          <IonTitle>Roles Management</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      
-      <IonContent className="bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="p-4 md:p-6 lg:p-8">
+    <MainLayout title="Roles Management">
+      <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-4">
               {renderRoleList()}
@@ -749,8 +726,8 @@ const RolesManagement: React.FC = () => {
           </div>
         </div>
 
-        {/* Create Role Modal */}
-        <IonModal isOpen={showCreateModal} onDidDismiss={() => setShowCreateModal(false)}>
+      {/* Create Role Modal */}
+      <IonModal isOpen={showCreateModal} onDidDismiss={() => setShowCreateModal(false)}>
           <IonHeader>
             <IonToolbar>
               <IonTitle>Create New Role</IonTitle>
@@ -776,8 +753,8 @@ const RolesManagement: React.FC = () => {
               <button
                 onClick={handleCreateRole}
                 className="w-full py-3.5 rounded-xl font-semibold text-white
-                         bg-gradient-to-r from-indigo-500 to-purple-500
-                         hover:from-indigo-600 hover:to-purple-600
+                         bg-gradient-to-r from-red-600 to-red-800
+                         hover:from-red-700 hover:to-red-900
                          transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 Create Role
@@ -813,8 +790,8 @@ const RolesManagement: React.FC = () => {
               <button
                 onClick={handleEditRole}
                 className="w-full py-3.5 rounded-xl font-semibold text-white
-                         bg-gradient-to-r from-indigo-500 to-purple-500
-                         hover:from-indigo-600 hover:to-purple-600
+                         bg-gradient-to-r from-red-600 to-red-800
+                         hover:from-red-700 hover:to-red-900
                          transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 Save Changes
@@ -872,8 +849,8 @@ const RolesManagement: React.FC = () => {
                 <button
                   onClick={handleDuplicateRole}
                   className="w-full mt-6 py-3 rounded-xl font-semibold text-white
-                           bg-gradient-to-r from-indigo-500 to-purple-500
-                           hover:from-indigo-600 hover:to-purple-600
+                           bg-gradient-to-r from-red-600 to-red-800
+                           hover:from-red-700 hover:to-red-900
                            transition-all duration-200 shadow-lg"
                 >
                   Create Duplicate
@@ -895,17 +872,16 @@ const RolesManagement: React.FC = () => {
           ]}
         />
 
-        {/* Toast */}
-        <IonToast
-          isOpen={toast.show}
-          onDidDismiss={() => setToast({ ...toast, show: false })}
-          message={toast.message}
-          color={toast.color}
-          duration={3000}
-          position="bottom"
-        />
-      </IonContent>
-    </IonPage>
+      {/* Toast */}
+      <IonToast
+        isOpen={toast.show}
+        onDidDismiss={() => setToast({ ...toast, show: false })}
+        message={toast.message}
+        color={toast.color}
+        duration={3000}
+        position="bottom"
+      />
+    </MainLayout>
   );
 };
 
