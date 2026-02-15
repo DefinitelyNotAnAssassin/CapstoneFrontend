@@ -369,6 +369,21 @@ class EmployeeService {
     }
   }
 
+  // Filter employees by program
+  async filterByProgram(programId: string): Promise<EmployeeInformation[]> {
+    try {
+      if (!programId) {
+        return this.getAllEmployees();
+      }
+
+      const data = await apiRequest(`/employees/by_program/?program_id=${programId}`);
+      return (data.results || data).map((emp: any) => this.transformEmployeeData(emp));
+    } catch (error) {
+      console.error("Error filtering employees by program:", error);
+      throw new Error("Failed to filter employees by program");
+    }
+  }
+
   // Get employee count
   async getEmployeeCount(): Promise<number> {
     try {
@@ -389,6 +404,36 @@ class EmployeeService {
       console.error("Error getting employees by status:", error);
       // If there's an error, return all employees
       return await this.getAllEmployees();
+    }
+  }
+
+  // Get employees that the current user can manage
+  async getManagedEmployees(managerId: string): Promise<EmployeeInformation[]> {
+    try {
+      if (!managerId) {
+        throw new Error("Manager ID is required");
+      }
+
+      const data = await apiRequest(`/employees/managed_employees/?user_id=${managerId}`);
+      return (data.results || data).map((emp: any) => this.transformEmployeeData(emp));
+    } catch (error) {
+      console.error("Error fetching managed employees:", error);
+      throw new Error("Failed to fetch managed employees");
+    }
+  }
+
+  // Get management scope information
+  async getManagementScope(managerId: string): Promise<any> {
+    try {
+      if (!managerId) {
+        throw new Error("Manager ID is required");
+      }
+
+      const data = await apiRequest(`/employees/management_scope/?user_id=${managerId}`);
+      return data;
+    } catch (error) {
+      console.error("Error fetching management scope:", error);
+      throw new Error("Failed to fetch management scope");
     }
   }
 }

@@ -8,7 +8,6 @@ import {
   peopleOutline,
   homeOutline,
   settingsOutline,
-  personOutline,
   keyOutline,
   lockClosedOutline,
 } from "ionicons/icons"
@@ -87,14 +86,6 @@ export const navigationConfig: NavSection[] = [
         icon: peopleOutline,
         path: "/employee-directory",
         permissions: ["employee_view_all", "employee_view_department", "employee_view_team"],
-      },
-      {
-        id: "employee-management",
-        title: "Employee Management",
-        icon: personOutline,
-        path: "/employee-management",
-        permissions: ["employee_create", "employee_edit_all"],
-        hrOnly: true,
       },
       {
         id: "organization",

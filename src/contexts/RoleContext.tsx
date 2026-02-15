@@ -204,7 +204,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
       // If no cached data, try to fetch by email
       if (!empId && currentUser.email) {
         try {
-          const employeeService = (await import('../services/EmployeeServiceNew')).default;
+          const employeeService = (await import('../services/EmployeeService')).default;
           empData = await employeeService.getEmployeeByEmail(currentUser.email);
           empId = empData?.id ? Number(empData.id) : null;
           

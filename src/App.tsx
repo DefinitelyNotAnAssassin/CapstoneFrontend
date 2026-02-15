@@ -3,18 +3,14 @@ import { useState, useEffect } from "react"
 import { Redirect, Route } from "react-router-dom"
 import { IonApp, IonRouterOutlet, IonSplitPane, setupIonicReact } from "@ionic/react"
 import { IonReactRouter } from "@ionic/react-router"
-import Home from "./pages/Home"
 import EmployeeDirectory from "./pages/employee/EmployeeDirectory"
-import EmployeeManagement from "./pages/employee/EmployeeManagement"
 import EmployeeDetail from "./pages/employee/EmployeeDetail"
 import EmployeeAdd from "./pages/employee/EmployeeAdd"
-import Organization from "./pages/organization/Organization"
 import FacultyLoading from "./pages/faculty/FacultyLoading"
 import LeavePolicyManagement from "./pages/leave/LeavePolicyManagement"
 import LeaveApproval from "./pages/leave/LeaveApproval"
 import LeaveManagement from "./pages/leave/LeaveManagement"
 import LeaveRequest from "./pages/leave/LeaveRequest"
-import LeaveRequestNew from "./pages/leave/LeaveRequestNew"
 import SignIn from "./pages/auth/SignIn"
 import SignInDirect from "./pages/auth/SignInDirect"
 import HRDashboard from "./pages/dashboard/HRDashboard"
@@ -27,7 +23,7 @@ import VerifyOTP from "./pages/otp/VerifyOTP"
 import FirebaseSetup from "./pages/FirebaseSetup"
 import AuthGuard from "./components/AuthGuard"
 import { RoleProvider } from "./contexts/RoleContext"
-import { AppSidebar } from "./components/layout/AppSidebar"
+import { AppSidebar } from "@components/layout"
 
 // RBAC Management Pages
 import RolesManagement from "./pages/rbac/RolesManagement"
@@ -68,7 +64,6 @@ const App: React.FC = () => (
               <Route path="/sign-in-direct" component={SignInDirect} exact={true} />
               <Route path="/email-otp" component={EmailOTP} exact={true} />
               <Route path="/verify-otp" component={VerifyOTP} exact={true} />
-              <Route path="/home" component={Home} exact={true} />
               
               {/* Protected routes - available to all authenticated users */}
               <AuthGuard path="/hr-dashboard" component={HRDashboard} exact={true} />
@@ -84,11 +79,6 @@ const App: React.FC = () => (
               <AuthGuard 
                 path="/employee-directory" 
                 component={EmployeeDirectory} 
-                exact={true} 
-              />
-              <AuthGuard 
-                path="/employee-management" 
-                component={EmployeeManagement} 
                 exact={true} 
               />
               <AuthGuard 
@@ -148,11 +138,9 @@ const App: React.FC = () => (
                 exact={true} 
               />
               
-              {/* Legacy routes - keeping for backwards compatibility */}
-              <AuthGuard path="/organization" component={Organization} exact={true} />
+              {/* Utility routes */}
               <AuthGuard path="/leave-management" component={LeaveManagement} exact={true} />
               <AuthGuard path="/faculty-loading" component={FacultyLoading} exact={true} />
-              <AuthGuard path="/leave-request-new" component={LeaveRequestNew} exact={true} />
               <AuthGuard path="/firebase-setup" component={FirebaseSetup} exact={true} />
               
               {/* Default route */}

@@ -47,7 +47,7 @@ import {
 import { useRole } from '../../contexts/RoleContext';
 import leaveService, { LeaveRequest as LeaveRequestType } from '../../services/LeaveService';
 import EmployeeDetail from '../employee/EmployeeDetail'
-import employeeService from '../../services/EmployeeServiceNew';
+import employeeService from '../../services/EmployeeService';
 import { MainLayout } from '@components/layout';
 
 const LeaveApproval: React.FC = () => {

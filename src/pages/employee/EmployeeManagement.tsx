@@ -45,7 +45,7 @@ import {
   schoolOutline,
   personOutline
 } from "ionicons/icons"
-import employeeService from "../../services/EmployeeServiceNew"
+import employeeService from "../../services/EmployeeService"
 import { useRole } from "../../contexts/RoleContext"
 import type { EmployeeInformation } from "../../data/data"
 import { MainLayout } from "@components/layout"
