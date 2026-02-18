@@ -1,8 +1,9 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Redirect, Route } from "react-router-dom"
-import { IonApp, IonRouterOutlet, IonSplitPane, setupIonicReact } from "@ionic/react"
+import { IonApp, IonRouterOutlet, IonSplitPane, IonLoading, setupIonicReact } from "@ionic/react"
 import { IonReactRouter } from "@ionic/react-router"
+import { useAuthContext } from "./services/AuthContext"
 import EmployeeDirectory from "./pages/employee/EmployeeDirectory"
 import EmployeeDetail from "./pages/employee/EmployeeDetail"
 import EmployeeAdd from "./pages/employee/EmployeeAdd"
@@ -51,14 +52,16 @@ import { AuthProvider } from "./services/AuthContext"
 
 setupIonicReact()
 
-const App: React.FC = () => (
-  <IonApp>
-    <AuthProvider>
-      <RoleProvider>
-        <IonReactRouter>
-          <IonSplitPane contentId="main-content" when="md">
-            <AppSidebar contentId="main-content" />
-            <IonRouterOutlet id="main-content">
+const AppContent: React.FC = () => {
+  const { currentUser } = useAuthContext()
+  
+
+  return (
+    <IonReactRouter>
+      <IonSplitPane contentId="main-content" when="md">
+        {/* Only show sidebar when user is authenticated */}
+        {currentUser && <AppSidebar contentId="main-content" />}
+        <IonRouterOutlet id="main-content">
               {/* Public routes */}
               <Route path="/sign-in" component={SignIn} exact={true} />
               <Route path="/sign-in-direct" component={SignInDirect} exact={true} />
@@ -148,6 +151,14 @@ const App: React.FC = () => (
             </IonRouterOutlet>
           </IonSplitPane>
         </IonReactRouter>
+  )
+}
+
+const App: React.FC = () => (
+  <IonApp>
+    <AuthProvider>
+      <RoleProvider>
+        <AppContent />
       </RoleProvider>
     </AuthProvider>
   </IonApp>

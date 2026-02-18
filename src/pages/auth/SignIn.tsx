@@ -24,6 +24,7 @@ import { useAudit } from "../../hooks/useAudit"
 import AuthService from "../../services/AuthService"
 import employeeService from "../../services/EmployeeService"
 import { applyFormStyles } from "../../utils/formHelpers"
+import { useAuthContext } from "../../services/AuthContext"
 import "./SignIn.css"
 
 const SignIn: React.FC = () => {
@@ -34,47 +35,20 @@ const SignIn: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const history = useHistory()
   const { logEvent } = useAudit()
+  const { currentUser, loading: authLoading } = useAuthContext()
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && currentUser) {
+      console.log("User already authenticated, redirecting to dashboard...");
+      history.replace("/hr-dashboard")
+    }
+  }, [currentUser, authLoading, history])
 
   // Apply form styles on component mount
   useEffect(() => {
     applyFormStyles()
   }, [])
-  
-  // Utility function for robust navigation
-  const navigateToDashboard = () => {
-    console.log("Using robust navigation to dashboard")
-    
-    // Try multiple navigation methods
-    try {
-      // Method 1: Using history.push
-      console.log("Trying history.push")
-      history.push("/hr-dashboard")
-      
-      // Method 2: Using window.location as backup
-      setTimeout(() => {
-        console.log("Checking if navigation was successful")
-        if (window.location.pathname !== "/hr-dashboard") {
-          console.log("Navigation failed, using window.location")
-          window.location.href = "#/hr-dashboard"  // Use hash routing format
-        }
-        setLoading(false)
-      }, 300)
-      
-      // Method 3: Last resort, try Ionic navigation directly (after a longer delay)
-      setTimeout(() => {
-        if (window.location.pathname !== "/hr-dashboard") {
-          console.log("Both navigation methods failed, trying direct hash change")
-          window.location.hash = "/hr-dashboard"
-          setLoading(false)
-        }
-      }, 600)
-    } catch (navErr) {
-      console.error("Navigation error:", navErr)
-      // Ultimate fallback
-      window.location.href = "#/hr-dashboard"
-      setLoading(false)
-    }
-  }
   
   const handleLogin = async () => {
     // Simple validation
@@ -109,10 +83,15 @@ const SignIn: React.FC = () => {
         
         console.log("Login successful, navigating to dashboard...")
         
-        // Small delay to ensure auth data is persisted
-        await new Promise(resolve => setTimeout(resolve, 300))
+        // Give a moment for localStorage to persist
+        await new Promise(resolve => setTimeout(resolve, 100))
         
-        navigateToDashboard()
+        // Dispatch custom event to notify AuthContext of login
+        window.dispatchEvent(new CustomEvent('auth-state-changed'))
+        
+        // Navigate to dashboard (router will handle it now that auth is updated)
+        history.push("/hr-dashboard")
+        
         return true
       } else {
         throw new Error("Authentication failed")

@@ -28,6 +28,7 @@ import {
 import { mailOutline, arrowForwardOutline } from "ionicons/icons"
 import { useHistory } from "react-router-dom"
 import { useAudit } from "../../hooks/useAudit"
+import { useAuthContext } from "../../services/AuthContext"
 import "./EmailOTP.css"
 
 const EmailOTP: React.FC = () => {
@@ -37,6 +38,14 @@ const EmailOTP: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState<string>("")
   const history = useHistory()
   const { logAction } = useAudit()
+  const { currentUser, loading: authLoading } = useAuthContext()
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (!authLoading && currentUser) {
+      history.replace('/hr-dashboard')
+    }
+  }, [currentUser, authLoading, history])
 
   const validateEmail = (email: string): boolean => {
     const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/

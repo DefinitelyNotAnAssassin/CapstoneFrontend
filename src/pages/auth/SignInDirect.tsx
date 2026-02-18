@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { IonContent, IonLoading, IonPage, IonText } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
+import { useAuthContext } from '../../services/AuthContext';
 
 /**
  * This component provides a direct authentication and navigation to the dashboard.
@@ -9,11 +10,20 @@ import { useHistory } from 'react-router-dom';
 const SignInDirect: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const history = useHistory();
+  const { currentUser, loading: authLoading } = useAuthContext();
 
+  // Redirect if already authenticated
   useEffect(() => {
-    // Set admin authentication in localStorage
-    authenticateDemoAdminAndNavigate();
-  }, [history]);
+    if (!authLoading && currentUser) {
+      history.replace('/hr-dashboard');
+      return;
+    }
+    
+    // Otherwise, proceed with demo admin authentication
+    if (!authLoading && !currentUser) {
+      authenticateDemoAdminAndNavigate();
+    }
+  }, [currentUser, authLoading, history]);
 
   return (
     <IonPage>
@@ -50,8 +60,13 @@ export function authenticateDemoAdminAndNavigate() {
   localStorage.setItem('demoAdminUser', JSON.stringify(demoAdminUser));
   console.log("Demo admin authentication data stored in localStorage");
   
-  // Attempt direct navigation
-  directNavigate();
+  // Dispatch custom event to notify AuthContext
+  window.dispatchEvent(new CustomEvent('auth-state-changed'));
+  
+  // Small delay then navigate
+  setTimeout(() => {
+    window.location.href = '/hr-dashboard';
+  }, 100);
 }
 
 /**

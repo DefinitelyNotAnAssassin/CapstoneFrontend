@@ -253,6 +253,9 @@ class AuthService {
     } finally {
       // Always clear local storage
       this.clearStoredAuth();
+      
+      // Dispatch custom event to notify AuthContext of logout
+      window.dispatchEvent(new CustomEvent('auth-state-changed'));
     }
   }
 
