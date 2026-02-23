@@ -157,20 +157,20 @@ const UserPermissions: React.FC = () => {
       
       const [rolesData, employeesResponse, deptsResponse, progsResponse] = await Promise.all([
         rbacService.getAssignableRoles(),
-        fetch('http://127.0.0.1:8000/api/employees/', { headers }).then(async r => {
+        fetch('https://dharklike.pythonanywhere.com/api/employees/', { headers }).then(async r => {
           if (!r.ok) throw new Error(`Employees API error: ${r.status}`);
           const data = await r.json();
           console.log('Employees response:', data);
           // Handle paginated response
           return Array.isArray(data) ? data : (data.results || []);
         }),
-        fetch('http://127.0.0.1:8000/api/departments/', { headers }).then(async r => {
+        fetch('https://dharklike.pythonanywhere.com/api/departments/', { headers }).then(async r => {
           if (!r.ok) throw new Error(`Departments API error: ${r.status}`);
           const data = await r.json();
           console.log('Departments response:', data);
           return Array.isArray(data) ? data : (data.results || []);
         }),
-        fetch('http://127.0.0.1:8000/api/programs/', { headers }).then(async r => {
+        fetch('https://dharklike.pythonanywhere.com/api/programs/', { headers }).then(async r => {
           if (!r.ok) throw new Error(`Programs API error: ${r.status}`);
           const data = await r.json();
           console.log('Programs response:', data);

@@ -256,7 +256,7 @@ const LeaveApproval: React.FC = () => {
   };
 
   // Set your API base URL here
-  const API_BASE_URL = (window as any).API_BASE_URL || 'http://127.0.0.1:8000/api';
+  const API_BASE_URL = (window as any).API_BASE_URL || 'https://dharklike.pythonanywhere.com/api';
   // Fetch employee details and leave credit balance for the selected request
   useEffect(() => {
     const fetchEmployeeAndCredit = async () => {

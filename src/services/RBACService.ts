@@ -5,7 +5,7 @@
  * Provides methods for managing permissions, roles, and role assignments.
  */
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api/rbac';
+const API_BASE_URL = 'https://dharklike.pythonanywhere.com/api/rbac';
 
 // ============================================================================
 // Type Definitions
