@@ -73,7 +73,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ contentId }) => {
   }
 
   const getUserRole = (): string => {
-    if (employee?.isHR || userRole?.level === -1) {
+    if (employee?.is_hr || userRole?.level === -1) {
       return "HR Administrator"
     }
     return userRole?.title || employee?.position_title || "Employee"

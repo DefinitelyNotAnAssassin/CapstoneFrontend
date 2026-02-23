@@ -10,6 +10,7 @@ import {
   settingsOutline,
   keyOutline,
   lockClosedOutline,
+  megaphoneOutline,
 } from "ionicons/icons"
 
 export interface NavItem {
@@ -39,6 +40,12 @@ export const navigationConfig: NavSection[] = [
         title: "Dashboard",
         icon: homeOutline,
         path: "/hr-dashboard",
+      },
+      {
+        id: "announcements",
+        title: "Announcements",
+        icon: megaphoneOutline,
+        path: "/announcements",
       },
     ],
   },

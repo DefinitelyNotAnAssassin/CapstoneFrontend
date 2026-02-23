@@ -74,7 +74,11 @@ export interface EmployeeInformation {
   academic_role_level?: number // Role level from backend (0=VPAA, 1=Dean, 2=PC, etc.)
   can_approve_leaves?: boolean // Whether this employee can approve leaves
   approval_scope?: string // Scope of approval (all, department, program, none)
-  isHR?: boolean // Whether this employee is from HR department
+  is_hr?: boolean // Whether this employee is from HR department
+
+  // Leave Package (used during creation)
+  leavePackageId?: number | null
+  customLeaveItems?: { leave_type: string; quantity: number }[]
 
   // Profile
   profileImage?: string

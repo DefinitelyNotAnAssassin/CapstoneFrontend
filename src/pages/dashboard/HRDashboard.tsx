@@ -358,7 +358,7 @@ const HRDashboard: React.FC = () => {
 
   // Get dashboard title based on role
   const getDashboardTitle = (): string => {
-    const isHRUser = currentEmployee?.isHR || userRole?.level === -1 || userRole?.title === "HR Administrator"
+    const isHRUser = currentEmployee?.is_hr || userRole?.level === -1 || userRole?.title === "HR Administrator"
     if (isHRUser) return "HR Dashboard"
     if (userRole?.title === "System Administrator") return "Admin Dashboard"
     if (userRole?.level === 0) return "VPAA Dashboard"
@@ -440,7 +440,7 @@ const HRDashboard: React.FC = () => {
   }
 
   // Determine if user is HR
-  const isHRUser = currentEmployee?.isHR || userRole?.level === -1 || userRole?.title === "HR Administrator"
+  const isHRUser = currentEmployee?.is_hr || userRole?.level === -1 || userRole?.title === "HR Administrator"
 
   return (
     <MainLayout 

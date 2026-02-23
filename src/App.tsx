@@ -19,6 +19,7 @@ import OrganizationManagement from "./pages/organization/OrganizationManagement"
 import LeaveCreditManagement from "./pages/leave/LeaveCreditManagement"
 import Reports from "./pages/Reports"
 import AuditTrail from "./pages/audit-trail/AuditTrail"
+import AnnouncementManagement from "./pages/announcements/AnnouncementManagement"
 import EmailOTP from "./pages/otp/EmailOTP"
 import VerifyOTP from "./pages/otp/VerifyOTP"
 import FirebaseSetup from "./pages/FirebaseSetup"
@@ -49,12 +50,29 @@ import "@ionic/react/css/display.css"
 /* Theme variables */
 import "./theme/variables.css"
 import { AuthProvider } from "./services/AuthContext"
+import { onForegroundMessage } from "./config/firebase"
 
 setupIonicReact()
 
 const AppContent: React.FC = () => {
   const { currentUser } = useAuthContext()
-  
+
+  // Listen for foreground FCM messages and show a browser notification
+  useEffect(() => {
+    const unsubscribe = onForegroundMessage((payload) => {
+      console.log("Foreground FCM message:", payload);
+      if (Notification.permission === "granted" && payload.notification) {
+        new Notification(payload.notification.title || "New Announcement", {
+          body: payload.notification.body || "",
+          icon: "/notification-icon-192.png",
+          badge: "/notification-badge-96.png",
+          tag: "announcement-" + (payload.data?.announcement_id || Date.now()),
+          renotify: true,
+        } as NotificationOptions);
+      }
+    });
+    return () => { if (typeof unsubscribe === "function") unsubscribe(); };
+  }, []);
 
   return (
     <IonReactRouter>
@@ -145,6 +163,7 @@ const AppContent: React.FC = () => {
               <AuthGuard path="/leave-management" component={LeaveManagement} exact={true} />
               <AuthGuard path="/faculty-loading" component={FacultyLoading} exact={true} />
               <AuthGuard path="/firebase-setup" component={FirebaseSetup} exact={true} />
+              <AuthGuard path="/announcements" component={AnnouncementManagement} exact={true} />
               
               {/* Default route */}
               <Route exact path="/" render={() => <Redirect to="/sign-in" />} />

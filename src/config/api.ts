@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
   positions: `${API_BASE_URL}/positions/`,
   departments: `${API_BASE_URL}/departments/`,
   offices: `${API_BASE_URL}/offices/`,
+  announcements: `${API_BASE_URL}/announcements/`,
 }
 
 // Auth header helper

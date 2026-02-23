@@ -15,6 +15,8 @@ const handleResponse = async (response: Response) => {
 // Helper function to make API requests
 const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
+  console.log(`[EmployeeService API] ${options.method || 'GET'} ${url}`);
+  
   const config = {
     headers: {
       'Content-Type': 'application/json',
@@ -24,6 +26,7 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
   };
 
   const response = await fetch(url, config);
+  console.log(`[EmployeeService API] Response status: ${response.status} ${response.statusText}`);
   return handleResponse(response);
 };
 
@@ -51,11 +54,21 @@ class EmployeeService {
   // Get all employees
   async getAllEmployees(): Promise<EmployeeInformation[]> {
     try {
+      console.log('[EmployeeService] Fetching all employees from API...')
       const data = await apiRequest('/employees/');
-      return (data.results || data).map((emp: any) => this.transformEmployeeData(emp));
+      console.log('[EmployeeService] Received employee data:', {
+        count: data.count || data.length,
+        hasResults: !!data.results,
+        isArray: Array.isArray(data)
+      })
+      const employees = (data.results || data).map((emp: any) => this.transformEmployeeData(emp));
+      console.log('[EmployeeService] Transformed employees:', employees.length)
+      return employees;
     } catch (error) {
-      console.error("Error fetching employees:", error);
-      throw new Error("Failed to fetch employees");
+      console.error("[EmployeeService] Error fetching employees:", error);
+      // Return empty array instead of throwing
+      console.warn('[EmployeeService] Returning empty array due to error')
+      return [];
     }
   }
 
@@ -178,7 +191,7 @@ class EmployeeService {
       academic_role_level: apiData.academic_role_level,
       can_approve_leaves: apiData.can_approve_leaves,
       approval_scope: apiData.approval_scope,
-      isHR: apiData.isHR || false,
+      is_hr: apiData.is_hr || false,
       
       // Profile
       profileImage: apiData.profile_image || '',
@@ -253,6 +266,10 @@ class EmployeeService {
       office: parseInt(employee.officeId),
       program: employee.programId ? parseInt(employee.programId) : null,
       
+      // Leave Package
+      leave_package_id: employee.leavePackageId || null,
+      custom_leave_items: employee.customLeaveItems || [],
+
       // Profile
       profile_image: employee.profileImage || null,
     };
@@ -343,14 +360,19 @@ class EmployeeService {
   async filterByDepartment(departmentId: string): Promise<EmployeeInformation[]> {
     try {
       if (!departmentId) {
+        console.log('[EmployeeService] No department ID provided, fetching all employees')
         return this.getAllEmployees();
       }
 
+      console.log('[EmployeeService] Filtering by department:', departmentId)
       const data = await apiRequest(`/employees/by_department/?department_id=${departmentId}`);
-      return (data.results || data).map((emp: any) => this.transformEmployeeData(emp));
+      const employees = (data.results || data).map((emp: any) => this.transformEmployeeData(emp));
+      console.log('[EmployeeService] Found employees in department:', employees.length)
+      return employees;
     } catch (error) {
-      console.error("Error filtering employees by department:", error);
-      throw new Error("Failed to filter employees by department");
+      console.error("[EmployeeService] Error filtering employees by department:", error);
+      console.warn('[EmployeeService] Returning empty array due to error')
+      return [];
     }
   }
 
@@ -373,14 +395,19 @@ class EmployeeService {
   async filterByProgram(programId: string): Promise<EmployeeInformation[]> {
     try {
       if (!programId) {
+        console.log('[EmployeeService] No program ID provided, fetching all employees')
         return this.getAllEmployees();
       }
 
+      console.log('[EmployeeService] Filtering by program:', programId)
       const data = await apiRequest(`/employees/by_program/?program_id=${programId}`);
-      return (data.results || data).map((emp: any) => this.transformEmployeeData(emp));
+      const employees = (data.results || data).map((emp: any) => this.transformEmployeeData(emp));
+      console.log('[EmployeeService] Found employees in program:', employees.length)
+      return employees;
     } catch (error) {
-      console.error("Error filtering employees by program:", error);
-      throw new Error("Failed to filter employees by program");
+      console.error("[EmployeeService] Error filtering employees by program:", error);
+      console.warn('[EmployeeService] Returning empty array due to error')
+      return [];
     }
   }
 

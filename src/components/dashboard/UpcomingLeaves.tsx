@@ -1,8 +1,9 @@
 "use client"
 
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { IonIcon } from "@ionic/react"
-import { calendarOutline, sunnyOutline, alertCircleOutline } from "ionicons/icons"
+import { calendarOutline, sunnyOutline, alertCircleOutline, megaphoneOutline } from "ionicons/icons"
+import announcementService, { type Announcement as APIAnnouncement } from "../../services/AnnouncementService"
 
 interface UpcomingLeave {
   id: string
@@ -102,26 +103,43 @@ interface AnnouncementsProps {
   announcements?: Announcement[]
 }
 
-const sampleAnnouncements: Announcement[] = [
-  {
-    id: "1",
-    title: "Holiday Announcement",
-    message: "Office will be closed on February 25th for National Holiday.",
-    type: "info",
-    date: "Feb 1, 2026",
-  },
-  {
-    id: "2",
-    title: "Leave Policy Update",
-    message: "New leave policy effective starting March 2026. Please review.",
-    type: "important",
-    date: "Jan 28, 2026",
-  },
-]
+const priorityToType = (priority: string): "info" | "warning" | "important" => {
+  switch (priority) {
+    case "urgent":
+    case "high":
+      return "important"
+    case "normal":
+      return "info"
+    case "low":
+    default:
+      return "info"
+  }
+}
 
-export const Announcements: React.FC<AnnouncementsProps> = ({
-  announcements = sampleAnnouncements,
-}) => {
+export const Announcements: React.FC<AnnouncementsProps> = () => {
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await announcementService.getAnnouncements()
+        const mapped: Announcement[] = (Array.isArray(data) ? data : []).slice(0, 5).map((a: APIAnnouncement) => ({
+          id: String(a.id),
+          title: a.title,
+          message: a.content.length > 120 ? a.content.substring(0, 120) + "..." : a.content,
+          type: priorityToType(a.priority),
+          date: new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        }))
+        setAnnouncements(mapped)
+      } catch (err) {
+        console.error("Failed to load announcements for dashboard:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
   const getTypeStyles = (type: Announcement["type"]) => {
     switch (type) {
       case "info":
@@ -142,7 +160,11 @@ export const Announcements: React.FC<AnnouncementsProps> = ({
         Announcements
       </h3>
 
-      {announcements.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-8 text-gray-500">
+          <p>Loading announcements...</p>
+        </div>
+      ) : announcements.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <IonIcon icon={alertCircleOutline} className="text-4xl mb-2" />
           <p>No announcements</p>

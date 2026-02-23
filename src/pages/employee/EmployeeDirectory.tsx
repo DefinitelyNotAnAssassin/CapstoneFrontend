@@ -45,7 +45,7 @@ import { MainLayout } from "@components/layout"
 type ViewMode = "directory" | "management"
 
 const EmployeeDirectory: React.FC = () => {
-  const { userRole, employee: currentEmployee, hasAnyPermission } = useRole()
+  const { userRole, employee: currentEmployee, hasAnyPermission, loading: roleLoading } = useRole()
 
   // View mode
   const canManage = userRole && userRole.level <= 2
@@ -74,22 +74,53 @@ const EmployeeDirectory: React.FC = () => {
   // ============================================================================
 
   useEffect(() => {
-    if (userRole && currentEmployee) {
-      loadEmployees()
-      if (canManage) {
-        loadManagedEmployees()
-        loadManagementScope()
-      }
+    console.log('[EmployeeDirectory] useEffect triggered', { 
+      roleLoading, 
+      hasUserRole: !!userRole, 
+      hasCurrentEmployee: !!currentEmployee,
+      userRoleLevel: userRole?.level
+    })
+
+    // Wait for role context to finish loading
+    if (roleLoading) {
+      console.log('[EmployeeDirectory] Waiting for role context to load...')
+      setIsLoading(true)
+      return
+    }
+
+    // If no user role or employee after loading, show error
+    if (!userRole || !currentEmployee) {
+      console.error('[EmployeeDirectory] No user role or employee after loading', {
+        userRole,
+        currentEmployee
+      })
+      setIsLoading(false)
+      setAlertMessage("Unable to load user information. Please try logging in again.")
+      setShowAlert(true)
+      return
+    }
+
+    // Load employee data
+    console.log('[EmployeeDirectory] Starting data load for user:', currentEmployee.email)
+    loadEmployees()
+    if (canManage) {
+      console.log('[EmployeeDirectory] Loading managed employees and scope')
+      loadManagedEmployees()
+      loadManagementScope()
     }
 
     const unsubscribe = employeeService.subscribe(() => {
+      console.log('[EmployeeDirectory] Employee data changed, reloading...')
       if (userRole && currentEmployee) {
         loadEmployees()
         if (canManage) loadManagedEmployees()
       }
     })
-    return () => unsubscribe()
-  }, [userRole, currentEmployee])
+    return () => {
+      console.log('[EmployeeDirectory] Cleanup: unsubscribing from employee service')
+      unsubscribe()
+    }
+  }, [roleLoading, userRole, currentEmployee])
 
   // Filter when search/data/segment changes
   useEffect(() => {
@@ -102,38 +133,55 @@ const EmployeeDirectory: React.FC = () => {
 
   const loadEmployees = async () => {
     try {
+      console.log('[EmployeeDirectory] Starting loadEmployees...', {
+        userLevel: userRole?.level,
+        currentEmployeeId: currentEmployee?.id,
+        departmentId: currentEmployee?.departmentId,
+        programId: currentEmployee?.programId
+      })
       setIsLoading(true)
       let employeeList: EmployeeInformation[] = []
 
       if (userRole?.level === 0) {
+        console.log('[EmployeeDirectory] Loading all employees (VPAA level)')
         employeeList = await employeeService.getAllEmployees()
       } else if (userRole?.level === 1) {
         if (currentEmployee?.departmentId) {
+          console.log('[EmployeeDirectory] Loading by department:', currentEmployee.departmentId)
           employeeList = await employeeService.filterByDepartment(currentEmployee.departmentId)
         } else {
+          console.log('[EmployeeDirectory] Loading all employees (Dean, no dept)')
           employeeList = await employeeService.getAllEmployees()
         }
       } else if (userRole?.level === 2) {
         if (currentEmployee?.programId) {
+          console.log('[EmployeeDirectory] Loading by program:', currentEmployee.programId)
           employeeList = await employeeService.filterByProgram(currentEmployee.programId)
         } else if (currentEmployee?.departmentId) {
+          console.log('[EmployeeDirectory] Loading by department:', currentEmployee.departmentId)
           employeeList = await employeeService.filterByDepartment(currentEmployee.departmentId)
         } else {
+          console.log('[EmployeeDirectory] Loading all employees (PC, no program/dept)')
           employeeList = await employeeService.getAllEmployees()
         }
       } else {
         if (currentEmployee?.id) {
+          console.log('[EmployeeDirectory] Loading self employee:', currentEmployee.id)
           const selfEmployee = await employeeService.getEmployeeById(currentEmployee.id)
           employeeList = selfEmployee ? [selfEmployee] : []
         }
       }
 
+      console.log('[EmployeeDirectory] Loaded employees:', employeeList.length)
       setEmployees(employeeList)
     } catch (error) {
-      console.error("Error loading employees:", error)
-      setAlertMessage("Failed to load employees. Please try again.")
+      console.error("[EmployeeDirectory] Error loading employees:", error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      setAlertMessage(`Failed to load employees: ${errorMessage}`)
       setShowAlert(true)
+      setEmployees([]) // Set empty array on error
     } finally {
+      console.log('[EmployeeDirectory] Finished loading employees')
       setIsLoading(false)
     }
   }
@@ -331,7 +379,7 @@ const EmployeeDirectory: React.FC = () => {
         loadEmployees()
         if (canManage) loadManagedEmployees()
       }}
-      isLoading={isLoading}
+      isLoading={roleLoading || isLoading}
       fab={addEmployeeFAB}
     >
       <div className="min-h-full bg-gradient-to-br from-slate-50 via-white to-slate-50">
@@ -339,6 +387,27 @@ const EmployeeDirectory: React.FC = () => {
           <IonRefresherContent pullingIcon={refresh} refreshingSpinner="circles" />
         </IonRefresher>
 
+        {/* Show error state if no valid user data */}
+        {!roleLoading && (!userRole || !currentEmployee) ? (
+          <div className="px-4 py-3">
+            <IonCard className="rounded-xl shadow-sm border border-red-200">
+              <IonCardContent>
+                <div className="flex flex-col items-center justify-center py-12 px-4">
+                  <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                    <IonIcon icon={peopleOutline} className="text-4xl text-red-500" />
+                  </div>
+                  <p className="text-center text-slate-900 font-semibold text-lg mb-2">
+                    Unable to Load Directory
+                  </p>
+                  <p className="text-center text-slate-600 text-sm max-w-md">
+                    Could not load user information. Please try signing in again.
+                  </p>
+                </div>
+              </IonCardContent>
+            </IonCard>
+          </div>
+        ) : (
+          <>
         {/* View Mode Toggle — only show if user can manage */}
         {canManage && (
           <div className="px-4 pt-3">
@@ -507,7 +576,12 @@ const EmployeeDirectory: React.FC = () => {
         )}
 
         {/* Employee List */}
-        {isLoading ? (
+        {roleLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 px-4">
+            <IonSpinner name="circles" className="w-16 h-16 text-primary-500" />
+            <p className="mt-4 text-slate-600 text-sm font-medium">Loading user information...</p>
+          </div>
+        ) : isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 px-4">
             <IonSpinner name="circles" className="w-16 h-16 text-primary-500" />
             <p className="mt-4 text-slate-600 text-sm font-medium">Loading employees...</p>
@@ -608,6 +682,8 @@ const EmployeeDirectory: React.FC = () => {
               </div>
             )}
           </>
+        )}
+        </>
         )}
 
         <IonAlert

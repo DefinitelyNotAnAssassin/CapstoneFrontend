@@ -161,9 +161,10 @@ const LeaveRequest: React.FC = () => {
         supporting_documents: []
       });
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating leave request:', error);
-      showToastMessage('Error creating leave request', 'danger');
+      const message = error?.message || 'Error creating leave request';
+      showToastMessage(message, 'danger');
     }
   };
 
@@ -188,7 +189,10 @@ const LeaveRequest: React.FC = () => {
   const getAvailableLeaveTypes = () => {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1; // 1-12
-    const employeeBirthMonth = employee?.date_of_birth ? new Date(employee.date_of_birth).getMonth() + 1 : null;
+    const employeeBirthMonth = employee?.birthDate ? new Date(employee.birthDate).getMonth() + 1 
+      : employee?.birth_date ? new Date(employee.birth_date).getMonth() + 1 
+      : null;
+    const employeeGender = employee?.gender || null;
     
     return (leaveCredits || [])
       .filter(credit => {
@@ -197,14 +201,33 @@ const LeaveRequest: React.FC = () => {
           return false;
         }
         
-        // Special handling for Birthday Leave
+        // Special handling for Birthday Leave - only during birthday month
         if (credit.leave_type === 'Birthday Leave') {
           return employeeBirthMonth === currentMonth;
+        }
+        
+        // Gender-based leave filtering
+        if (credit.leave_type === 'Maternity Leave') {
+          return employeeGender === 'Female';
+        }
+        if (credit.leave_type === 'Paternity Leave') {
+          return employeeGender === 'Male';
         }
         
         return true;
       });
   };
+
+  // Determine if the selected leave type is Sick Leave (dates must be in the past)
+  const isSickLeave = newRequest.leave_type === 'Sick Leave';
+  const todayISO = new Date().toISOString();
+
+  // For Sick Leave: max date is today, no min constraint
+  // For other leaves: min date is today, no max constraint
+  const startDateMin = isSickLeave ? undefined : todayISO;
+  const startDateMax = isSickLeave ? todayISO : undefined;
+  const endDateMin = isSickLeave ? undefined : (newRequest.start_date || todayISO);
+  const endDateMax = isSickLeave ? todayISO : undefined;
 
   if (loading || roleLoading) {
     return (
@@ -432,7 +455,7 @@ const LeaveRequest: React.FC = () => {
             <IonList>              <IonItem>
                 <IonLabel position="stacked">Leave Type</IonLabel>                <IonSelect
                   value={newRequest.leave_type}
-                  onIonChange={(e) => setNewRequest({...newRequest, leave_type: e.detail.value})}
+                  onIonChange={(e) => setNewRequest({...newRequest, leave_type: e.detail.value, start_date: '', end_date: ''})}
                   placeholder="Select leave type"
                 >
                   {getAvailableLeaveTypes().map((credit) => (
@@ -449,7 +472,8 @@ const LeaveRequest: React.FC = () => {
                   value={newRequest.start_date}
                   onIonChange={(e) => setNewRequest({...newRequest, start_date: e.detail.value as string})}
                   presentation="date"
-                  min={new Date().toISOString()}
+                  min={startDateMin}
+                  max={startDateMax}
                 />
               </IonItem>
 
@@ -459,9 +483,18 @@ const LeaveRequest: React.FC = () => {
                   value={newRequest.end_date}
                   onIonChange={(e) => setNewRequest({...newRequest, end_date: e.detail.value as string})}
                   presentation="date"
-                  min={newRequest.start_date || new Date().toISOString()}
+                  min={endDateMin}
+                  max={endDateMax}
                 />
               </IonItem>
+
+              {isSickLeave && (
+                <IonItem lines="none">
+                  <IonText color="warning">
+                    <p style={{ fontSize: '0.85em' }}>Sick Leave can only be filed for past or current dates.</p>
+                  </IonText>
+                </IonItem>
+              )}
 
               {newRequest.start_date && newRequest.end_date && (
                 <IonItem>

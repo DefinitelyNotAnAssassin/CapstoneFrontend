@@ -81,7 +81,7 @@ const LeaveApproval: React.FC = () => {
   const [currentApprovalType, setCurrentApprovalType] = useState<'supervisor' | 'hr' | 'hr_bypass'>('supervisor');
 
   // Check if user is HR
-  const isHR = employee?.isHR || false;
+  const isHR = employee?.is_hr || false;
   const isSupervisor = hasPermission('approveRequests') && !isHR;
 
   useEffect(() => {

@@ -296,7 +296,8 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
     setCanApprove(data.can_approve);
     setApprovalScope(data.approval_scope);
     setHighestLevel(data.highest_level);
-    setIsHR(data.is_hr);
+    // Use is_hr from RBAC or fall back to the employee model field
+    setIsHR(data.is_hr || employee?.is_hr || false);
   };
 
   const applyLegacyRole = (empData: any) => {
@@ -314,7 +315,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
     let approve = false;
 
     // Check if HR
-    if (empData.isHR || empData.department?.name?.toLowerCase().includes('hr')) {
+    if (empData.is_hr) {
       level = -1;
       scope = 'all';
       hr = true;

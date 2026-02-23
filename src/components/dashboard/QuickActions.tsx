@@ -49,13 +49,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       path: "/my-leaves",
       color: "green",
     },
-    {
-      title: "Leave Calendar",
-      description: "View team leave calendar",
-      icon: calendarOutline,
-      path: "/leave-calendar",
-      color: "purple",
-    },
+
   ]
 
   // Add approval action if user can approve

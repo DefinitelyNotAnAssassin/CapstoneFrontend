@@ -44,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const location = useLocation()
   const { userRole: roleData, hasPermission, employee } = useRole()
 
-  const isHRUser = employee?.isHR || roleData?.level === -1 || roleData?.title === "HR Administrator"
+  const isHRUser = employee?.is_hr || roleData?.level === -1 || roleData?.title === "HR Administrator"
   const canApprove = roleData?.canApprove || false
 
   // Check if a permission exists

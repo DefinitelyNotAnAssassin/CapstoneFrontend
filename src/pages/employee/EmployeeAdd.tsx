@@ -33,6 +33,7 @@ import {
   IonText,
   IonLoading,
   IonAlert,
+  IonChip,
 } from "@ionic/react"
 import { useHistory } from "react-router"
 import { save } from "ionicons/icons"
@@ -42,6 +43,32 @@ import { useAudit } from "../../hooks/useAudit"
 import { FormItem } from "../../components/FormComponents"
 import { applyFormStyles, getFormItemStyle, getLabelStyle } from "../../utils/formHelpers"
 import "./EmployeeAdd.css"
+
+// Types for leave packages
+interface LeavePackageItem {
+  id: number
+  leave_type: string
+  leave_type_display: string
+  quantity: number
+}
+
+interface LeavePackage {
+  id: number
+  name: string
+  description: string | null
+  is_active: boolean
+  is_predefined: boolean
+  items: LeavePackageItem[]
+}
+
+interface LeaveTypeOption {
+  value: string
+  label: string
+}
+
+type PackageMode = "predefined" | "custom" | "none"
+
+const API_BASE_URL = 'http://127.0.0.1:8000/api'
 
 const EmployeeAdd: React.FC = () => {
   const history = useHistory();
@@ -53,6 +80,13 @@ const EmployeeAdd: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [showAlert, setShowAlert] = useState(false)
   const [alertMessage, setAlertMessage] = useState("")
+
+  // Leave package state
+  const [leavePackages, setLeavePackages] = useState<LeavePackage[]>([])
+  const [leaveTypes, setLeaveTypes] = useState<LeaveTypeOption[]>([])
+  const [packageMode, setPackageMode] = useState<PackageMode>("predefined")
+  const [selectedPackageId, setSelectedPackageId] = useState<number | null>(null)
+  const [customLeaveItems, setCustomLeaveItems] = useState<{ leave_type: string; quantity: number }[]>([])
 
   // Form state
   const [formData, setFormData] = useState<Partial<EmployeeInformation>>({
@@ -108,6 +142,34 @@ const EmployeeAdd: React.FC = () => {
     officeId: "",
     programId: "",
   })
+
+  // Fetch leave packages and leave types on mount
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/employee-packages/?is_active=true`)
+        if (res.ok) {
+          const data = await res.json()
+          setLeavePackages(data.results || data)
+        }
+      } catch (e) {
+        console.error('Failed to load leave packages', e)
+      }
+    }
+    const fetchLeaveTypes = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/employee-packages/leave-types/`)
+        if (res.ok) {
+          const data = await res.json()
+          setLeaveTypes(data)
+        }
+      } catch (e) {
+        console.error('Failed to load leave types', e)
+      }
+    }
+    fetchPackages()
+    fetchLeaveTypes()
+  }, [])
 
   // Calculate age whenever birthDate changes
   useEffect(() => {
@@ -296,6 +358,10 @@ const EmployeeAdd: React.FC = () => {
         departmentId: formData.departmentId!,
         officeId: formData.officeId!,        // Only include programId if it has a value
         ...(formData.programId ? { programId: formData.programId } : {}),
+
+        // Leave package
+        ...(packageMode === 'predefined' && selectedPackageId ? { leavePackageId: selectedPackageId } : {}),
+        ...(packageMode === 'custom' && customLeaveItems.length > 0 ? { customLeaveItems } : {}),
 
         profileImage: `https://randomuser.me/api/portraits/${formData.gender === "Male" ? "men" : "women"}/${Math.floor(Math.random() * 70) + 1}.jpg`,
       }
@@ -871,6 +937,7 @@ const EmployeeAdd: React.FC = () => {
         )}
 
         {segment === "employment" && (
+          <>
           <IonCard>
             <IonCardHeader>
               <IonCardTitle>Employment Information</IonCardTitle>
@@ -962,6 +1029,149 @@ const EmployeeAdd: React.FC = () => {
               </IonList>
             </IonCardContent>
           </IonCard>
+      
+          {/* Leave Package Section */}
+          <IonCard>
+            <IonCardHeader>
+              <IonCardTitle>Leave Package</IonCardTitle>
+            </IonCardHeader>
+            <IonCardContent>
+              <IonList>
+                <IonItem>
+                  <IonLabel position="stacked">Package Type</IonLabel>
+                  <IonSelect
+                    value={packageMode}
+                    onIonChange={(e) => {
+                      setPackageMode(e.detail.value as PackageMode)
+                      setSelectedPackageId(null)
+                      setCustomLeaveItems([])
+                    }}
+                  >
+                    <IonSelectOption value="predefined">Predefined Package</IonSelectOption>
+                    <IonSelectOption value="custom">Custom Package</IonSelectOption>
+                    <IonSelectOption value="none">No Package</IonSelectOption>
+                  </IonSelect>
+                </IonItem>
+
+                {/* Predefined package selector */}
+                {packageMode === "predefined" && (
+                  <>
+                    <IonItem>
+                      <IonLabel position="stacked">Select Leave Package</IonLabel>
+                      <IonSelect
+                        value={selectedPackageId}
+                        onIonChange={(e) => setSelectedPackageId(e.detail.value)}
+                        placeholder="Choose a package"
+                      >
+                        {leavePackages.map((pkg) => (
+                          <IonSelectOption key={pkg.id} value={pkg.id}>
+                            {pkg.name}
+                          </IonSelectOption>
+                        ))}
+                      </IonSelect>
+                    </IonItem>
+
+                    {/* Show selected package details */}
+                    {selectedPackageId && (() => {
+                      const pkg = leavePackages.find(p => p.id === selectedPackageId)
+                      if (!pkg) return null
+                      return (
+                        <div className="ion-padding-start ion-padding-end ion-padding-bottom">
+                          {pkg.description && (
+                            <IonText color="medium">
+                              <p style={{ fontSize: '0.85rem', marginBottom: '8px' }}>{pkg.description}</p>
+                            </IonText>
+                          )}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {pkg.items.map((item, idx) => (
+                              <IonChip key={idx} color="primary" outline>
+                                <IonLabel>{item.leave_type_display}: {item.quantity} days</IonLabel>
+                              </IonChip>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })()}
+                  </>
+                )}
+
+                {/* Custom package builder */}
+                {packageMode === "custom" && (
+                  <>
+                    {customLeaveItems.map((item, index) => (
+                      <IonCard key={index} style={{ margin: '8px 0' }}>
+                        <IonCardContent style={{ padding: '8px 16px' }}>
+                          <IonItem lines="none">
+                            <IonLabel position="stacked">Leave Type</IonLabel>
+                            <IonSelect
+                              value={item.leave_type}
+                              placeholder="Select leave type"
+                              onIonChange={(e) => {
+                                const updated = [...customLeaveItems]
+                                updated[index] = { ...updated[index], leave_type: e.detail.value }
+                                setCustomLeaveItems(updated)
+                              }}
+                            >
+                              {leaveTypes
+                                .filter(lt => !customLeaveItems.some((ci, ci_idx) => ci_idx !== index && ci.leave_type === lt.value))
+                                .map((lt) => (
+                                  <IonSelectOption key={lt.value} value={lt.value}>
+                                    {lt.label}
+                                  </IonSelectOption>
+                                ))}
+                            </IonSelect>
+                          </IonItem>
+                          <IonItem lines="none">
+                            <IonLabel position="stacked">Days</IonLabel>
+                            <IonInput
+                              type="number"
+                              min="0"
+                              value={item.quantity}
+                              onIonChange={(e) => {
+                                const updated = [...customLeaveItems]
+                                updated[index] = { ...updated[index], quantity: Number(e.detail.value) || 0 }
+                                setCustomLeaveItems(updated)
+                              }}
+                              placeholder="Number of days"
+                            />
+                          </IonItem>
+                          <IonButton
+                            fill="clear"
+                            color="danger"
+                            size="small"
+                            onClick={() => {
+                              const updated = customLeaveItems.filter((_, i) => i !== index)
+                              setCustomLeaveItems(updated)
+                            }}
+                          >
+                            Remove
+                          </IonButton>
+                        </IonCardContent>
+                      </IonCard>
+                    ))}
+
+                    <IonButton
+                      expand="full"
+                      fill="outline"
+                      onClick={() => setCustomLeaveItems([...customLeaveItems, { leave_type: '', quantity: 0 }])}
+                      disabled={customLeaveItems.length >= leaveTypes.length}
+                    >
+                      Add Leave Type
+                    </IonButton>
+                  </>
+                )}
+
+                {packageMode === "none" && (
+                  <div className="ion-padding">
+                    <IonText color="medium">
+                      <p style={{ fontSize: '0.85rem' }}>No leave credits will be assigned to this employee on creation.</p>
+                    </IonText>
+                  </div>
+                )}
+              </IonList>
+            </IonCardContent>
+          </IonCard>
+          </>
         )}
 
         <IonGrid>

@@ -25,6 +25,9 @@ import AuthService from "../../services/AuthService"
 import employeeService from "../../services/EmployeeService"
 import { applyFormStyles } from "../../utils/formHelpers"
 import { useAuthContext } from "../../services/AuthContext"
+import { requestFCMToken } from "../../config/firebase"
+import { doc, setDoc } from "firebase/firestore"
+import { db } from "../../config/firebase"
 import "./SignIn.css"
 
 const SignIn: React.FC = () => {
@@ -80,6 +83,23 @@ const SignIn: React.FC = () => {
           "127.0.0.1",
           "success"
         )
+
+        // Request FCM token and store in Firestore users collection
+        try {
+          const fcmToken = await requestFCMToken();
+          if (fcmToken) {
+            const docId = String(userId);
+            await setDoc(doc(db, "users", docId), {
+              user_id: docId,
+              fcmToken: fcmToken,
+            }, { merge: true });
+            console.log("FCM token saved to Firestore for user:", docId);
+          } else {
+            console.warn("FCM token was null – notification permission may have been denied");
+          }
+        } catch (fcmError) {
+          console.error("Could not store FCM token:", fcmError);
+        }
         
         console.log("Login successful, navigating to dashboard...")
         
@@ -256,11 +276,6 @@ const SignIn: React.FC = () => {
           </div>
         </div>
 
-        <IonLoading 
-          isOpen={loading} 
-          message="Authenticating with Django API... Please wait" 
-          spinner="bubbles" 
-        />
 
         <IonAlert
           isOpen={showAlert}
